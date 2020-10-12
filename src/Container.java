@@ -1,14 +1,17 @@
 public class Container {
     private int id;
-    private int length;
-    private int weight;
-    private int x;
-    private int y;
+    private int Lc;
+    private int Gc;
 
-    public Container(int id, int length, int weight) {
-        this.id = id;
-        this.length = length;
-        this.weight = weight;
+    public Container(String id, String length, String weight) {
+        this.id = Integer.parseInt(id);
+        this.Lc = Integer.parseInt(length);
+        this.Gc = Integer.parseInt(weight);
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(id);
     }
 
     public int getId() {
@@ -19,35 +22,20 @@ public class Container {
         this.id = id;
     }
 
-    public int getLength() {
-        return length;
+    public int getLc() {
+        return Lc;
     }
 
-    public void setLength(int length) {
-        this.length = length;
+    public void setLc(int lc) {
+        this.Lc = lc;
     }
 
-    public int getWeight() {
-        return weight;
+    public int getGc() {
+        return Gc;
     }
 
-    public void setWeight(int weight) {
-        this.weight = weight;
+    public void setGc(int gc) {
+        this.Gc = gc;
     }
 
-    public int getX() {
-        return x;
-    }
-
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-    public void setY(int y) {
-        this.y = y;
-    }
 }
