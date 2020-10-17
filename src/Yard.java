@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Yard {
@@ -18,8 +19,8 @@ public class Yard {
     private int currentHeight = 0;
     private Slot [][] slots = null;
     private List<Slot> slotlist = new ArrayList<>();
-    private List<Crane> cranes = new ArrayList<>();
     private List<Container> containers = new ArrayList<>();
+    private List<Crane> cranes = new ArrayList<>();
 
     // om te checken waar er containers zitten
     public void checkContainers(){
@@ -96,12 +97,17 @@ public class Yard {
                             data = myReader.nextLine();
                             String[] split6 = data.split(",");
                             Container c = containers.get(Integer.parseInt(split6[0]) - 1);
+
+                            // Voeg container toe aan gegeven slots
                             for (int i = 1; i < split6.length; i++) {
                                 Slot s = slotlist.get(Integer.parseInt(split6[i]) - 1);
                                 s.addContainer(c);
                                 if (s.getHoogteContainers() > currentHeight) {
                                     currentHeight = s.getHoogteContainers();
                                 }
+
+                                //Voeg slot toe aan container
+                                c.addSlot(s);
                             }
                         }
                         break;
@@ -119,6 +125,7 @@ public class Yard {
     public void writeCraneMovements(String fileName){
         try {
             FileWriter myWriter = new FileWriter(fileName);
+
             myWriter.write("# container->slots\n");
             for (int i = 0; i < Hmax; i++) {
                 for (int j = 0; j < slots[0].length; j++) {
@@ -137,7 +144,42 @@ public class Yard {
             }
             // labo 1 is gewoon top containers bezoeken
             // dus we nemen gewoon de 1e crane hiervoor
+            Crane crane = cranes.get(0);
+
             myWriter.write("# kraanbewegingen (t,x,y)\n");
+            //startpositie
+            int t = 0;
+            myWriter.write(t + ", " + crane.getX() + ", " + crane.getY() + "\n");
+
+            // Tussenstappen:
+            // Voor elk slot: zoek de hoogste container, bezoek deze indien nog niet bezocht
+            boolean[] visited = new boolean[containers.size()];
+
+            for (Slot slot : getSlotlist()){
+                if (slot.getHoogteContainers() == 0)
+                    continue;
+
+                Container hoogsteContainer = slot.getContainers()[slot.getHoogteContainers()-1];
+
+                //Bezoek hoogste container indien container nog niet bezocht
+                if (!visited[hoogsteContainer.getId()-1]){
+
+                    //bewegingen in beide richtingen tegelijk => tijd tot volgende container wordt bepaald door maximale afstand tot die container
+                    t = t + Math.max(Math.abs(hoogsteContainer.bepaalX() - crane.getX()), Math.abs(hoogsteContainer.bepaalY(getWs()) - crane.getY()));
+
+                    //verplaats kraan naar nieuwe positie
+                    crane.setX(hoogsteContainer.bepaalX());
+                    crane.setY(hoogsteContainer.bepaalY(getWs()));
+                    visited[hoogsteContainer.getId()-1] = true;
+
+                    myWriter.write(t + ", " + crane.getX() + ", " + crane.getY() + "\n");
+
+                }
+
+            }
+
+            //eindpositie (0,0)
+            myWriter.write(t + Math.max(crane.getX(), crane.getY()) + ", " + 0 + ", " + 0);
 
             myWriter.close();
         } catch (IOException e) {

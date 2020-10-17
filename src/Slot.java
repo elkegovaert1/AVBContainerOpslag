@@ -14,13 +14,8 @@ public class Slot {
     }
 
     public void addContainer(Container container) {
-        if (containers[0] == null) {
-            containers[0] = container;
-        } else {
-            hoogteContainers++;
-            containers[hoogteContainers] = container;
-        }
-
+        containers[hoogteContainers] = container;
+        hoogteContainers++;
     }
 
     public int getId() {
