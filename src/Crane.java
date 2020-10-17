@@ -1,4 +1,5 @@
 public class Crane {
+
     private int id;
     private int x;
     private int y;

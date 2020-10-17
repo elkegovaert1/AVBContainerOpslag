@@ -1,7 +1,9 @@
 public class Slot {
+
     private int id;
     private int x;
     private int y;
+
     private Container[] containers;
     private int hoogteContainers;
 
