@@ -1,5 +1,7 @@
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -12,7 +14,7 @@ public class Main {
         int Ls = 0;
         int Ws = 0;
         int currentHeight = 0;
-        Slot [][][] slots = null;
+        Slot [][] slots = null;
         List<Slot> slotlist = new ArrayList<>();
         List<Crane> cranes = new ArrayList<>();
         List<Container> containers = new ArrayList<>();
@@ -38,7 +40,7 @@ public class Main {
                         Ws = Integer.parseInt(split2[1]);
                         data = myReader.nextLine();
 
-                        slots = new Slot[L/Ls][W/Ws][Hmax];
+                        slots = new Slot[L/Ls][W/Ws];
 
                         break;
                     case "# slots":
@@ -48,9 +50,8 @@ public class Main {
                             Slot slot = new Slot (split3[0], Hmax);
                             slot.setXY(split3[1], split3[2]);
                             slotlist.add(slot);
-                            for (int i =0; i<Hmax; i++) {
-                                slots[Integer.parseInt(split3[1])/Ls][Integer.parseInt(split3[2])/Ws][i] = slot;
-                            }
+                            slots[Integer.parseInt(split3[1])/Ls][Integer.parseInt(split3[2])/Ws] = slot;
+
                             data = myReader.nextLine();
                         }
                         break;
@@ -88,26 +89,47 @@ public class Main {
             }
             myReader.close();
 
-            // labo 1 is gewoon top containers bezoeken
-            // dus we nemen gewoon de 1e crane hiervoor
-
-            for (int i = 0; i < slots[0][0].length; i++) {
-
-            }
-
-
             // om te checken waar er containers zitten
             System.out.println("slots:");
-            for (int i = 0; i < slots[0][0].length; i++) {
+            for (int i = 0; i < Hmax; i++) {
                 for (int j = 0; j < slots[0].length; j++) {
                     for (int k = 0; k < slots.length; k++) {
-                        System.out.print(slots[k][j][i].getId() + " ");
-                        System.out.print("("+slots[k][j][i].getContainers()[i]+ ") ");
+                        System.out.print(slots[k][j].getId() + " ");
+                        System.out.print("("+slots[k][j].getContainers()[i]+ ") ");
 
                     }
                     System.out.println();
                 }
                 System.out.println();
+            }
+
+            // schrijven naar bestand
+            try {
+                FileWriter myWriter = new FileWriter("data/output.ysi");
+                myWriter.write("# container->slots\n");
+                for (int i = 0; i < Hmax; i++) {
+                    for (int j = 0; j < slots[0].length; j++) {
+                        for (int k = 0; k < slots.length; k++) {
+                            if (slots[k][j].getContainers()[i] != null) {
+                                myWriter.write(slots[k][j].getContainers()[i].getId() + "," + slots[k][j].getId());
+                                int lengte = slots[k][j].getContainers()[i].getLc()/Ls;
+                                for (int l =1; l < lengte; l++) {
+                                    myWriter.write("," + (slots[k][j].getId()+l));
+                                }
+                                k = k+lengte;
+                                myWriter.write("\n");
+                            }
+                        }
+                    }
+                }
+                // labo 1 is gewoon top containers bezoeken
+                // dus we nemen gewoon de 1e crane hiervoor
+                myWriter.write("# kraanbewegingen (t,x,y)\n");
+
+                myWriter.close();
+            } catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
             }
 
         } catch (FileNotFoundException e) {

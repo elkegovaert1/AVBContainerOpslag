@@ -21,13 +21,6 @@ public class Slot {
 
     }
 
-    public int[] getMiddelpunt(int niveau) {
-        Container c = containers[niveau];
-
-        return null;
-    }
-
-
     public int getId() {
         return id;
     }
