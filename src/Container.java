@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Container {
@@ -27,7 +28,16 @@ public class Container {
     }
 
     public int bepaalX(){
-        return slots.get(slots.size()/2).getX();
+        // sorteer integers van slots en kies middelste
+        List<Integer> ints = new ArrayList<>();
+        for(int i = 0; i<slots.size(); i++)
+            ints.add(slots.get(i).getX());
+
+        Collections.sort(ints);
+        return ints.get(ints.size()/2);
+
+        //maakt gebruik van ordening bij inlezen (klopt deze altijd?)
+        //return slots.get(slots.size()/2).getX();
     }
 
     public int bepaalY(int width){
