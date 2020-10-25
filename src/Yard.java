@@ -149,7 +149,7 @@ public class Yard {
             myWriter.write("# kraanbewegingen (t,x,y)\n");
             //startpositie
             int t = 0;
-            myWriter.write(t + ", " + crane.getX() + ", " + crane.getY() + "\n");
+            myWriter.write(t + "," + crane.getX() + "," + crane.getY() + "\n");
 
             // Tussenstappen:
             // Voor elk slot: zoek de hoogste container, bezoek deze indien nog niet bezocht
@@ -172,14 +172,14 @@ public class Yard {
                     crane.setY(hoogsteContainer.bepaalY(getWs()));
                     visited[hoogsteContainer.getId()-1] = true;
 
-                    myWriter.write(t + ", " + crane.getX() + ", " + crane.getY() + "\n");
+                    myWriter.write(t + "," + crane.getX() + "," + crane.getY() + "\n");
 
                 }
 
             }
 
             //eindpositie (0,0)
-            myWriter.write(t + Math.max(crane.getX(), crane.getY()) + ", " + 0 + ", " + 0);
+            myWriter.write(t + Math.max(crane.getX(), crane.getY()) + "," + 0 + "," + 0);
 
             myWriter.close();
         } catch (IOException e) {
