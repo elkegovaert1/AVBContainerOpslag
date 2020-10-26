@@ -15,10 +15,12 @@ public class Main {
             yard.writeCraneMovements(args[1]);
         }
 
-        /*
+
 
         Yard yard = new Yard("data/L40_W24_H3_Q1_C3.ysi");
         yard.writeCraneMovements("data/L40_W24_H3_Q1_C3.yso");
+
+        yard.findSlots();
 
         Yard yard1 = new Yard("data/L100_W48_H3_Q1_C4.ysi");
         yard1.writeCraneMovements("data/L100_W48_H3_Q1_C4.yso");
@@ -29,7 +31,7 @@ public class Main {
         Yard yard3 = new Yard("data/example.ysi");
         yard3.writeCraneMovements("data/example.yso");
 
-         */
+
 
     }
 }

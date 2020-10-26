@@ -1,22 +1,56 @@
+import java.util.ArrayList;
+import java.util.List;
+
 public class Slot {
 
     private int id;
     private int x;
     private int y;
 
-    private Container[] containers;
-    private int hoogteContainers;
+    private List<Container> containers;
 
-    public Slot(String id, int Hmax) {
+    public Slot(String id) {
         this.id = Integer.parseInt(id);
-        this.containers = new Container[Hmax];
-        this.hoogteContainers = 0;
+        this.containers = new ArrayList<>();
     }
 
     public void addContainer(Container container) {
-        containers[hoogteContainers] = container;
-        hoogteContainers++;
+        containers.add(container);
     }
+
+    public Container removeContainer(){
+        return containers.remove(containers.size()-1);
+    }
+
+    public boolean isSorted(){
+        if(containers.size() >= 2){
+            for(int i = 1; i<containers.size(); i++){
+                if (containers.get(i-1).getGc() > containers.get(i).getGc())
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean isSorted(Container container){
+        containers.add(container);
+        if(containers.size() >= 2){
+            for(int i = 1; i<containers.size(); i++){
+                if (containers.get(i-1).getGc() > containers.get(i).getGc())
+                    containers.remove(container);
+                    return false;
+            }
+        }
+        containers.remove(container);
+        return true;
+    }
+
+    //geen gewicht 1 bovenaan
+    public boolean checkWeight(){
+        return containers.get(containers.size()-1).getGc() > 1;
+    }
+
+
 
     public int getId() {
         return id;
@@ -26,16 +60,12 @@ public class Slot {
         this.id = id;
     }
 
-    public Container[] getContainers() {
+    public List<Container> getContainers() {
         return containers;
     }
 
-    public int getHoogteContainers() {
-        return hoogteContainers;
-    }
-
-    public void setHoogteContainers(int hoogteContainers) {
-        this.hoogteContainers = hoogteContainers;
+    public void setContainers(List<Container> containers) {
+        this.containers = containers;
     }
 
     public int getX() {

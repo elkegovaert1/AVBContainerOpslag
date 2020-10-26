@@ -2,10 +2,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class Yard {
 
@@ -30,7 +27,7 @@ public class Yard {
             for (int j = 0; j < slots[0].length; j++) {
                 for (int k = 0; k < slots.length; k++) {
                     System.out.print(slots[k][j].getId() + " ");
-                    System.out.print("("+slots[k][j].getContainers()[i]+ ") ");
+                    System.out.print("("+slots[k][j].getContainers().get(i)+ ") ");
 
                 }
                 System.out.println();
@@ -68,7 +65,7 @@ public class Yard {
                         data = myReader.nextLine();
                         while (!data.equals("# cranes")) {
                             String[] split3 = data.split(",");
-                            Slot slot = new Slot(split3[0], Hmax);
+                            Slot slot = new Slot(split3[0]);
                             slot.setXY(split3[1], split3[2]);
                             slotlist.add(slot);
                             slots[Integer.parseInt(split3[1]) / Ls][Integer.parseInt(split3[2]) / Ws] = slot;
@@ -102,8 +99,8 @@ public class Yard {
                             for (int i = 1; i < split6.length; i++) {
                                 Slot s = slotlist.get(Integer.parseInt(split6[i]) - 1);
                                 s.addContainer(c);
-                                if (s.getHoogteContainers() > currentHeight) {
-                                    currentHeight = s.getHoogteContainers();
+                                if (s.getContainers().size() > currentHeight) {
+                                    currentHeight = s.getContainers().size();
                                 }
 
                                 //Voeg slot toe aan container
@@ -130,9 +127,9 @@ public class Yard {
             for (int i = 0; i < Hmax; i++) {
                 for (int j = 0; j < slots[0].length; j++) {
                     for (int k = 0; k < slots.length; k++) {
-                        if (slots[k][j].getContainers()[i] != null) {
-                            myWriter.write(slots[k][j].getContainers()[i].getId() + "," + slots[k][j].getId());
-                            int lengte = slots[k][j].getContainers()[i].getLc()/Ls;
+                        if (slots[k][j].getContainers().size() > i) {
+                            myWriter.write(slots[k][j].getContainers().get(i).getId() + "," + slots[k][j].getId());
+                            int lengte = slots[k][j].getContainers().get(i).getLc()/Ls;
                             for (int l =1; l < lengte; l++) {
                                 myWriter.write("," + (slots[k][j].getId()+l));
                             }
@@ -156,10 +153,10 @@ public class Yard {
             boolean[] visited = new boolean[containers.size()];
 
             for (Slot slot : getSlotlist()){
-                if (slot.getHoogteContainers() == 0)
+                if (slot.getContainers().size() == 0)
                     continue;
 
-                Container hoogsteContainer = slot.getContainers()[slot.getHoogteContainers()-1];
+                Container hoogsteContainer = slot.getContainers().get(slot.getContainers().size()-1);
 
                 //Bezoek hoogste container indien container nog niet bezocht
                 if (!visited[hoogsteContainer.getId()-1]){
@@ -187,6 +184,103 @@ public class Yard {
             e.printStackTrace();
         }
 
+    }
+
+    public void checkYard(){
+
+        for (Slot slot : getSlotlist()){
+            if (slot.getContainers().size() == 0)
+                continue;
+
+            Slot firstSlot = null;
+            while(!slot.isSorted())
+                firstSlot = findSlots(slot.getContainers().get(slot.getContainers().size()-1));
+
+
+        }
+    }
+
+    public void moveContainer(Container container, Slot slot){
+        //move crane
+
+        //pick up container
+
+        //remove container from slots
+        //zoek slot in lijst
+        int index = slotlist.indexOf(slot);
+        for (int i = 0; i<container.getSlots().size(); i++){
+            slotlist.get(index+i).removeContainer();
+        }
+
+        //remove slots from container
+        
+
+        //move crane
+
+        //drop container
+
+        //add container to slots
+
+
+        //add slots to container
+    }
+
+    public Slot findSlots(Container container){
+        for (int i = 0; i < slots[0].length; i++) {
+            for (int j = 0; j < slots.length-container.getSlots().size(); j++) {
+
+                //check max hoogte
+                if(slots[j][i].getContainers().size() + 1 > Hmax)
+                    continue;
+
+                //check zelfde hoogte
+                if(!checkSameHeight(i, j, container)){
+                    continue;
+                }
+
+                //check sorted
+                if (!slots[j][i].isSorted(container))
+                    continue;
+
+                //checkWeight
+                if(!slots[j][i].checkWeight())
+                    continue;
+
+                if (!checkSameLength(i, j, container))
+                    continue;
+
+                return slots[j][i];
+
+            }
+        }
+
+        return null;
+    }
+
+
+    public boolean checkSameHeight(int i, int j, Container container){
+        int hoogte = slots[j][i].getContainers().size();
+        for (int k = 0; k < container.getSlots().size(); k++){
+            if(hoogte != slots[j][k].getContainers().size())
+                return false;
+        }
+        return true;
+    }
+
+    public boolean checkSameLength(int i, int j, Container container){
+        Set<Container> bottomContainers = new HashSet<>();
+        for (int k = 0; k < container.getSlots().size(); k++){
+            bottomContainers.add(slots[j][k].getContainers().get(slots[j][k].getContainers().size()-1));
+        }
+
+        int lengte = 0;
+        for (Container container1 : bottomContainers){
+            lengte = lengte + container1.getLc();
+        }
+        if (lengte != container.getLc())
+            return false;
+
+        return true;
     }
 
     public int getL() {
