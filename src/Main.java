@@ -11,27 +11,26 @@ public class Main {
 
         // argumenten voor JAR
         if(args.length == 2){
-            Yard yard = new Yard(args[0]);
-            yard.writeCraneMovements(args[1]);
+            Yard yard = Reader.read(args[0]);
+            yard.moveCrane();
+            Writer.write(args[1], yard);
         }
 
+        Yard yard = Reader.read("data/L40_W24_H3_Q1_C3.ysi");
+        yard.moveCrane();
+        Writer.write("data/L40_W24_H3_Q1_C3.yso", yard);
 
+        Yard yard1 = Reader.read("data/L100_W48_H3_Q1_C4.ysi");
+        yard1.moveCrane();
+        Writer.write("data/L100_W48_H3_Q1_C4.yso", yard1);
 
-        Yard yard = new Yard("data/L40_W24_H3_Q1_C3.ysi");
-        yard.writeCraneMovements("data/L40_W24_H3_Q1_C3.yso");
+        Yard yard2 = Reader.read("data/L1000_W240_H3_Q1_C1000.ysi");
+        yard2.moveCrane();
+        Writer.write("data/L1000_W240_H3_Q1_C1000.yso", yard2);
 
-        yard.findSlots();
-
-        Yard yard1 = new Yard("data/L100_W48_H3_Q1_C4.ysi");
-        yard1.writeCraneMovements("data/L100_W48_H3_Q1_C4.yso");
-
-        Yard yard2 = new Yard("data/L1000_W240_H3_Q1_C1000.ysi");
-        yard2.writeCraneMovements("data/L1000_W240_H3_Q1_C1000.yso");
-
-        Yard yard3 = new Yard("data/example.ysi");
-        yard3.writeCraneMovements("data/example.yso");
-
-
+        Yard yard3 = Reader.read("data/example.ysi");
+        yard3.moveCrane();
+        Writer.write("data/example.yso", yard3);
 
     }
 }
