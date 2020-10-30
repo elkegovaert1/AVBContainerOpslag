@@ -1,7 +1,8 @@
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
-public class Slot {
+public class Slot implements Comparable<Slot>{
 
     private int id;
     private int x;
@@ -22,6 +23,7 @@ public class Slot {
         return containers.remove(containers.size()-1);
     }
 
+    //controleer of een stapel containers in een bepaald slot juist gesorteerd is op gewicht (zwaarste containers bovenaan)
     public boolean isSorted(){
         if(containers.size() >= 2){
             for(int i = 1; i<containers.size(); i++){
@@ -32,6 +34,7 @@ public class Slot {
         return true;
     }
 
+    //controleer of een stapel containers in een bepaald slot juist gesorteerd ZOU ZIJN op gewicht (zwaarste containers bovenaan) INDIEN WE EEN BEPAALDE CONTAINER zouden toevoegen
     public boolean isSorted(Container container){
         containers.add(container);
         if(containers.size() >= 2){
@@ -45,12 +48,10 @@ public class Slot {
         return true;
     }
 
-    //geen gewicht 1 bovenaan
+    //controleer of er geen container met gewicht 1 bovenaan staat
     public boolean checkWeight(){
         return containers.get(containers.size()-1).getGc() > 1;
     }
-
-
 
     public int getId() {
         return id;
@@ -81,4 +82,9 @@ public class Slot {
         return y;
     }
 
+    //sorteer slots op x waarde
+    @Override
+    public int compareTo(Slot slot) {
+        return Integer.compare(this.x, slot.x);
+    }
 }

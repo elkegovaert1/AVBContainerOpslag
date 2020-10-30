@@ -12,8 +12,20 @@ public class Crane {
         this.craneRoute = new CraneRoute(this.x, this.y);
     }
 
+    //gebruikt bij verplaatsing zonder opnemen of neerplaatsen container (vb. eindpositie of bij labo 1)
     public void move(int nextX, int nextY){
+        //verplaatsing opslaan
         craneRoute.move(x, y, nextX, nextY);
+
+        //verplaats kraan naar nieuwe positie
+        setX(nextX);
+        setY(nextY);
+    }
+
+    //gebruikt bij verplaatsing naar container (+ opnemen of neerplaatsen)
+    public void moveContainer(int nextX, int nextY, Container container){
+        //verplaatsing opslaan
+        craneRoute.moveContainer(x, y, nextX, nextY, container);
 
         //verplaats kraan naar nieuwe positie
         setX(nextX);

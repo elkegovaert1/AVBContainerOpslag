@@ -59,13 +59,13 @@ public class Reader {
                         break;
                     case "# containers":
                         data = myReader.nextLine();
-                        while (!data.equals("# container->slots")) {
+                        while (!data.equals("# container -> slots")) { //LABO 2: spaties rond pijlen!
                             String[] split5 = data.split(",");
                             yard.getContainers().add(new Container(split5[0], split5[1], split5[2]));
                             data = myReader.nextLine();
                         }
                         break;
-                    case "# container->slots":
+                    case "# container -> slots": //LABO 2: spaties rond pijlen!
                         while (myReader.hasNextLine()) {
                             data = myReader.nextLine();
                             String[] split6 = data.split(",");

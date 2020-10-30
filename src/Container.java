@@ -5,8 +5,8 @@ import java.util.List;
 public class Container {
 
     private int id;
-    private int Lc;
-    private int Gc;
+    private int Lc; //lengte container (20,40,60)
+    private int Gc; //gewicht container (1,2,3)
 
     private List<Slot> slots;
 
@@ -28,23 +28,15 @@ public class Container {
     }
 
     public int bepaalX(){
-        // sorteer integers van slots en kies middelste
-        List<Integer> ints = new ArrayList<>();
-        for(int i = 0; i<slots.size(); i++)
-            ints.add(slots.get(i).getX());
+        //sorteer slots op x waarde voor zekerheid (klopt normaal al vanuit inlezen )
+        Collections.sort(slots);
 
-        Collections.sort(ints);
-        return ints.get(ints.size()/2);
-
-        //maakt gebruik van ordening bij inlezen (klopt deze altijd?)
-        //return slots.get(slots.size()/2).getX();
+        return slots.get(slots.size()/2).getX();
     }
 
     public int bepaalY(int width){
         return slots.get(0).getY()+width/2;
     }
-
-
 
     public List<Slot> getSlots() {
         return slots;
