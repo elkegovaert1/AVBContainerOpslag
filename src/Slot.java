@@ -39,18 +39,22 @@ public class Slot implements Comparable<Slot>{
         containers.add(container);
         if(containers.size() >= 2){
             for(int i = 1; i<containers.size(); i++){
-                if (containers.get(i-1).getGc() > containers.get(i).getGc())
+                if (containers.get(i-1).getGc() > containers.get(i).getGc()) {
                     containers.remove(container);
                     return false;
+                }
             }
         }
         containers.remove(container);
         return true;
     }
 
-    //controleer of er geen container met gewicht 1 bovenaan staat
+    //indien er een container in het slot staat, controleer of er geen container met gewicht 1 bovenaan staat
     public boolean checkWeight(){
-        return containers.get(containers.size()-1).getGc() > 1;
+        if(containers.size() == 0)
+            return true;
+        else
+            return containers.get(containers.size()-1).getGc() > 1;
     }
 
     public int getId() {

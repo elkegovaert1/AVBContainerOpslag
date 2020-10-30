@@ -19,7 +19,9 @@ public class Main {
         }
 
         Yard yard = Reader.read("data/L500_W60_H3_Q1_C10.ysi");
+        yard.checkContainers(); // visuele controle van yard
         yard.checkYard();
+        yard.checkContainers(); // visuele controle van yard
         Writer.write("data/L500_W60_H3_Q1_C10.yso", yard);
 
 

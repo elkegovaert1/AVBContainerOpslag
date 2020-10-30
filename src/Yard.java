@@ -49,63 +49,82 @@ public class Yard {
         crane.move(0,0);
     }
 
-    // om te checken waar er containers zitten
+    // om visueel te checken waar er containers zitten
     public void checkContainers(){
-        System.out.println("slots:");
-        for (int i = 0; i < Hmax; i++) {
-            System.out.println("Hoogte " + i + ":");
-            for (int j = 0; j < slots[0].length; j++) {
-                for (int k = 0; k < slots.length; k++) {
-                    System.out.print(slots[k][j].getId() + " ");
-                    System.out.print("("+slots[k][j].getContainers().get(i)+ ") ");
+        System.out.println("Yard:[Length = " + slots.length + "*" + Ls + "][Width = " + slots[0].length + "*" + Ws + "]");
+
+        for (int height = 0; height < Hmax; height++) {
+            System.out.println("Height " + height + ":");
+            for (int width = 0; width < slots[0].length; width++) {
+                for (int length = 0; length < slots.length; length++) {
+                    //System.out.print(slots[k][j].getId() + " ");
+                    if(height >= slots[length][width].getContainers().size())
+                        System.out.print("_");
+                    else
+                        System.out.print(Integer.toHexString(slots[length][width].getContainers().get(height).getId()));
 
                 }
                 System.out.println();
             }
         }
+
+        for (Container container : containers)
+            System.out.println(container.getId() + " " + container.getGc());
     }
 
-    //controleer of Yard voldoet aan veiligheidsvoorschriften, verplaats containers indien dit niet het geval is
+    //controleer of elk slot van Yard voldoet aan veiligheidsvoorschriften, verplaats containers indien dit niet het geval is
+    //beweeg naar eindpositie (0,0) zodra alle veiligheidsvoorschriften voldaan zijn
     public void checkYard(){
 
         for (Slot slot : getSlotlist()){
+
+            //indien geen containers => veiligheidsvoorschriften voldaan
             if (slot.getContainers().size() == 0)
                 continue;
 
-            Slot firstSlot = null;
-            while(!slot.isSorted())
-                firstSlot = findSlots(slot.getContainers().get(slot.getContainers().size()-1));
-
+            //zolang veiligheidsvoorschriften niet voldaan in slot => zoek mogelijk nieuw slot voor bovenste container
+            //TODO: containers met gewicht 1 mogen ook niet alleen staan => zie voorbeeld in details:
+            //"Onderstaande stapeling voldoet niet aan de veiligheidsvoorschriften, want de paarse container met gewicht 1 is niet
+            //verankerd. De stapeling kan geldig gemaakt worden door er de blauwe op te plaatsen."
+            //TODO: we moeten een zwaardere container zoeken voor alleenstaande containers met gewicht 1 (ook controleren wanneer een container met gewicht 1 verplaatst wordt)
+            while(!slot.isSorted()){
+                Container topContainer = slot.getContainers().get(slot.getContainers().size()-1);
+                Slot newSlot = findSlots(topContainer);
+                moveContainer(topContainer, newSlot);
+            }
 
         }
+
+        //eindpositie (0,0)
+        cranes.get(0).move(0,0);
+
     }
 
     // zoek een mogelijk slot voor een container die niet voldoet aan de veiligheidsvoorschriften
     public Slot findSlots(Container container){
-        for (int i = 0; i < slots[0].length; i++) {
-            for (int j = 0; j < slots.length-container.getSlots().size(); j++) {
+        for (int width = 0; width < slots[0].length; width++) {
+            for (int length = 0; length < slots.length-container.getSlots().size(); length++) {
 
                 //check max hoogte
-                if(slots[j][i].getContainers().size() + 1 > Hmax)
+                if(slots[length][width].getContainers().size() + 1 > Hmax)
                     continue;
 
                 //check zelfde hoogte
-                if(!checkSameHeight(i, j, container)){
+                if(!checkSameHeight(length, width, container))
                     continue;
-                }
 
                 //check sorted
-                if (!slots[j][i].isSorted(container))
+                if (!slots[length][width].isSorted(container))
                     continue;
 
                 //checkWeight
-                if(!slots[j][i].checkWeight())
+                if(!slots[length][width].checkWeight())
                     continue;
 
-                if (!checkSameLength(i, j, container))
+                if (!checkSameLength(length, width, container))
                     continue;
 
-                return slots[j][i];
+                return slots[length][width];
 
             }
         }
@@ -142,7 +161,9 @@ public class Yard {
         //zoek slot in lijst
         index = slotlist.indexOf(newSlot);
         for (int i = 0; i<container.getLc()/Ls; i++){
-            slotlist.get(index+i).addContainer(container);
+            Slot slot = slotlist.get(index+i);
+            slot.addContainer(container);
+            //slotlist.get(index+i).addContainer(container);
 
             //add slot to container
             container.getSlots().add(slotlist.get(index+i));
@@ -152,10 +173,10 @@ public class Yard {
 
     //controleer of alle opeenvolgende slots waar een container in zou geplaatst worden, dezelfde hoogte hebben
     // (container moet op vlak oppervlak staan)
-    public boolean checkSameHeight(int i, int j, Container container){
-        int hoogte = slots[j][i].getContainers().size();
-        for (int k = 0; k < container.getSlots().size(); k++){
-            if(hoogte != slots[j][k].getContainers().size())
+    public boolean checkSameHeight(int length, int width, Container container){
+        int height = slots[length][width].getContainers().size();
+        for (int i = 0; i < container.getSlots().size(); i++){
+            if(height != slots[length+i][width].getContainers().size())
                 return false;
         }
         return true;
@@ -163,20 +184,33 @@ public class Yard {
 
     //controleer of de lengte van een container gelijk is aan de lengten van alle onderliggende containers
     // (hoeken van container moeten overeenkomen met hoeken van onderstaande + geen lege slots onder container)
-    public boolean checkSameLength(int i, int j, Container container){
-        Set<Container> bottomContainers = new HashSet<>();
-        for (int k = 0; k < container.getSlots().size(); k++){
-            bottomContainers.add(slots[j][k].getContainers().get(slots[j][k].getContainers().size()-1));
-        }
+    public boolean checkSameLength(int length, int width, Container container){
 
-        int lengte = 0;
-        for (Container container1 : bottomContainers){
-            lengte = lengte + container1.getLc();
-        }
-        if (lengte != container.getLc())
-            return false;
+        //indien container op de grond staat, geen probleem met lengte
+        if (slots[length][width].getContainers().size() == 0)
+            return true;
 
-        return true;
+        // indien er onderstaande containers zijn
+        else{
+            //set van containers die zich zouden bevinden onder de container die we willen plaatsen
+            Set<Container> bottomContainers = new HashSet<>();
+
+            for (int i = 0; i < container.getSlots().size(); i++){
+                List<Container> stack = slots[length+i][width].getContainers();
+                //bovenste container van huidige stapel toevoegen
+                bottomContainers.add(stack.get(stack.size()-1));
+            }
+
+            // tel alle lengten van onderliggende containers op, indien deze gelijk is aan de lengte van de te plaasten container is deze check true, anders false
+            int totalLength = 0;
+            for (Container c : bottomContainers){
+                totalLength = totalLength + c.getLc();
+            }
+            if (totalLength != container.getLc())
+                return false;
+
+            return true;
+        }
     }
 
     public int getL() {
