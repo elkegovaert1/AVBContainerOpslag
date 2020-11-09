@@ -57,6 +57,11 @@ public class Slot implements Comparable<Slot>{
             return containers.get(containers.size()-1).getGc() > 1;
     }
 
+    //geeft bovenste container
+    public Container getTopContainer() {
+        return containers.get(containers.size()-1);
+    }
+
     public int getId() {
         return id;
     }

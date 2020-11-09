@@ -1,7 +1,3 @@
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.*;
 
 public class Yard {
@@ -76,21 +72,28 @@ public class Yard {
     //beweeg naar eindpositie (0,0) zodra alle veiligheidsvoorschriften voldaan zijn
     public void checkYard(){
 
-        for (Slot slot : getSlotlist()){
+        for (Slot slot : slotlist){
+
+            // controle of alles gestorteerd + verplaatsen
+            controlSorted();
 
             //indien geen containers => veiligheidsvoorschriften voldaan
-            if (slot.getContainers().size() == 0)
+            if (slot.getContainers().isEmpty())
                 continue;
 
             //zolang veiligheidsvoorschriften niet voldaan in slot => zoek mogelijk nieuw slot voor bovenste container
-            //TODO: containers met gewicht 1 mogen ook niet alleen staan => zie voorbeeld in details:
-            //"Onderstaande stapeling voldoet niet aan de veiligheidsvoorschriften, want de paarse container met gewicht 1 is niet
-            //verankerd. De stapeling kan geldig gemaakt worden door er de blauwe op te plaatsen."
-            //TODO: we moeten een zwaardere container zoeken voor alleenstaande containers met gewicht 1 (ook controleren wanneer een container met gewicht 1 verplaatst wordt)
-            while(!slot.isSorted()){
-                Container topContainer = slot.getContainers().get(slot.getContainers().size()-1);
-                Slot newSlot = findSlots(topContainer);
-                moveContainer(topContainer, newSlot);
+            //kijken ofdat bovenste gewicht niet 1 is
+            if (!slot.checkWeight()) {
+                // als max hoogte bereikt, eerst container verplaatsen
+                if (slot.getContainers().size() == Hmax) {
+                    Container container = slot.getTopContainer();
+                    moveContainer(container, findSlots(container));
+                    moveHeavierContainer(container);
+                // anders direct zwaardere erop zetten
+                } else {
+                    moveHeavierContainer(slot.getTopContainer());
+                }
+
             }
 
         }
@@ -98,6 +101,117 @@ public class Yard {
         //eindpositie (0,0)
         cranes.get(0).move(0,0);
 
+    }
+
+    private void controlSorted() {
+        for (Slot slot: slotlist) {
+            if (slot.getContainers().isEmpty())
+                continue;
+
+            while(!slot.isSorted()){
+                Container topContainer = slot.getContainers().get(slot.getContainers().size()-1);
+                Slot newSlot = findSlots(topContainer);
+                moveContainer(topContainer, newSlot);
+                slot = slotlist.get(0);
+            }
+        }
+    }
+
+    // move container with weight > 1 to container with weight = 1
+    public void moveHeavierContainer(Container container) {
+        for (Slot slot : getSlotlist()){
+            // als geen slot niet checken
+            if (slot.getContainers().isEmpty())
+                continue;
+
+            // check gewicht > 1
+            if (!slot.checkWeight())
+                continue;
+
+            // check of eronder niet al 1 of meer containers met gewicht 1 staat
+            if (slot.getContainers().size() > 1) {
+                boolean movable = true;
+                for (int i = 0; i < slot.getTopContainer().getSlots().size(); i++) {
+                    if ((slot.getTopContainer().getSlots().get(i).getContainers().get(slot.getContainers().size()-2).getGc() == 1)) {
+                        movable = false;
+                    }
+                }
+                if (!movable) {
+                    continue;
+                }
+            }
+
+            // check grootte is gelijk
+            if (slot.getContainers().get(slot.getContainers().size()-1).getLc() == container.getLc()) {
+                moveContainer(slot.getContainers().get(slot.getContainers().size()-1), container.getSlots().get(0));
+                return;
+            }
+
+            // check grootte is groter
+            if (slot.getContainers().get(slot.getContainers().size()-1).getLc() > container.getLc()) {
+                // hoeveel plaatsen nog op te vullen
+                int extraSlotsNeeded = slot.getContainers().get(slot.getContainers().size()-1).getLc() - container.getLc();
+                // vind containers voor er rond en geef eerste slot van de volledige rij terug
+                Slot newSlot = checkSurroundingSlots(container, extraSlotsNeeded, container.getSlots().get(0));
+                if (newSlot == null)
+                    continue;
+                // verplaats container naar eerste slot van de rijd
+                moveContainer(slot.getContainers().get(slot.getContainers().size()-1), newSlot);
+                return;
+            }
+
+        }
+
+    }
+
+    public Slot checkSurroundingSlots(Container container, int extraSlotsNeeded, Slot slot) {
+        Slot firstSlot = slot;
+        // before current container
+        // als eerste container => overslaan
+        if (container.getSlots().get(container.getSlots().get(0).getId()-1).getId() > 1) {
+            // als geen containers voor => overslaan
+            if (!slotlist.get(container.getSlots().get(0).getId()-1).getContainers().isEmpty()) {
+                Slot slotBefore = slotlist.get(container.getSlots().get(0).getId()-1);
+                // check same height
+                if (slotBefore.getContainers().size() == container.getSlots().get(0).getContainers().size()) {
+                    extraSlotsNeeded = extraSlotsNeeded - slotBefore.getTopContainer().getLc();
+                    // als 0 dan volledig ondersteund
+                    if (extraSlotsNeeded == 0) {
+                        return slotBefore.getTopContainer().getSlots().get(0);
+                    }
+                    // als > 0 dan nog extra containers nodig
+                    else if (extraSlotsNeeded > 0) {
+                        firstSlot = slotBefore.getTopContainer().getSlots().get(0);
+                        return checkSurroundingSlots(slotBefore.getTopContainer(), extraSlotsNeeded, firstSlot);
+                    }
+                    // corrigeer voor volgende stap
+                    else
+                        extraSlotsNeeded = extraSlotsNeeded + slotlist.get(container.getSlots().get(0).getId()-1).getTopContainer().getLc();
+                }
+            }
+        }
+
+        // after current container
+        // als laatste container => overslaan
+        if (container.getSlots().get(container.getSlots().size()-1).getId() != slotlist.size()) {
+            // als geen containers erna => overslaan
+            if (!slotlist.get(container.getSlots().get(container.getSlots().size()-1).getId()+1).getContainers().isEmpty()) {
+                Slot slotAfter = slotlist.get(container.getSlots().get(container.getSlots().size()-1).getId()+1);
+                // check same height
+                if (slotAfter.getContainers().size() == container.getSlots().get(0).getContainers().size()) {
+                    extraSlotsNeeded = extraSlotsNeeded - slotAfter.getTopContainer().getLc();
+                    // als 0 dan volledig ondersteund
+                    if (extraSlotsNeeded == 0)
+                        return slotAfter.getTopContainer().getSlots().get(0);
+                    // als > 0 dan nog extra containers nodig
+                    else if (extraSlotsNeeded > 0) {
+                        return checkSurroundingSlots(slotAfter.getTopContainer(), extraSlotsNeeded, firstSlot);
+                    }
+                }
+            }
+        }
+        // geen passende combinatie gevonden
+        return null;
     }
 
     // zoek een mogelijk slot voor een container die niet voldoet aan de veiligheidsvoorschriften
