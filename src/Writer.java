@@ -7,10 +7,18 @@ public class Writer {
 
         try {
             FileWriter myWriter = new FileWriter(fileName);
-
             //schrijf #container->slots
             myWriter.write("# container->slots\n");
-            for (int i = 0; i < yard.getHmax(); i++) {
+            for (Container c: yard.getContainers()) {
+                myWriter.write(c.getId()+ "," + c.getSlots().get(0).getId());
+                for (int i=1; i < c.getSlots().size(); i++) {
+                    myWriter.write("," + c.getSlots().get(i).getId());
+                }
+                myWriter.write("\n");
+            }
+
+            // deze leek foute gevens te geven?
+            /*for (int i = 0; i < yard.getHmax(); i++) {
                 for (int j = 0; j < yard.getSlots()[0].length; j++) {
                     for (int k = 0; k < yard.getSlots().length; k++) {
                         if (yard.getSlots()[k][j].getContainers().size() > i) {
@@ -24,7 +32,7 @@ public class Writer {
                         }
                     }
                 }
-            }
+            }*/
 
             //schrijf kraanbewegingen voor elke kraan
             myWriter.write("# kraanbewegingen (t,x,y)\n");

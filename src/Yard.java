@@ -120,55 +120,161 @@ public class Yard {
     // move container with weight > 1 to container with weight = 1
     public void moveHeavierContainer(Container container) {
         for (Slot slot : getSlotlist()){
-            // als geen slot niet checken
-            if (slot.getContainers().isEmpty())
-                continue;
 
-            // check gewicht > 1
-            if (!slot.checkWeight())
-                continue;
+            if (checkRestrictionHeavierContainer(slot)) {
 
-            // check of eronder niet al 1 of meer containers met gewicht 1 staat
-            if (slot.getContainers().size() > 1) {
-                boolean movable = true;
-                for (int i = 0; i < slot.getTopContainer().getSlots().size(); i++) {
-                    if ((slot.getTopContainer().getSlots().get(i).getContainers().get(slot.getContainers().size()-2).getGc() == 1)) {
-                        movable = false;
-                    }
+                // check grootte is gelijk
+                if (slot.getContainers().get(slot.getContainers().size()-1).getLc() == container.getLc()) {
+                    moveContainer(slot.getContainers().get(slot.getContainers().size()-1), container.getSlots().get(0));
+                    return;
                 }
-                if (!movable) {
-                    continue;
+
+                // check grootte is groter
+                if (slot.getContainers().get(slot.getContainers().size()-1).getLc() > container.getLc()) {
+                    // hoeveel plaatsen nog op te vullen
+                    int extraSlotsNeeded = slot.getContainers().get(slot.getContainers().size()-1).getLc() - container.getLc();
+                    // vind containers voor er rond en geef eerste slot van de volledige rij terug
+                    Slot surroundingSlot = checkSurroundingSlots(container, extraSlotsNeeded, container.getSlots().get(0));
+                    if (surroundingSlot == null)
+                        continue;
+                    // verplaats container naar eerste slot van de rijd
+                    moveContainer(slot.getContainers().get(slot.getContainers().size()-1), surroundingSlot);
+                    return;
                 }
             }
 
-            // check grootte is gelijk
-            if (slot.getContainers().get(slot.getContainers().size()-1).getLc() == container.getLc()) {
-                moveContainer(slot.getContainers().get(slot.getContainers().size()-1), container.getSlots().get(0));
-                return;
-            }
 
-            // check grootte is groter
-            if (slot.getContainers().get(slot.getContainers().size()-1).getLc() > container.getLc()) {
-                // hoeveel plaatsen nog op te vullen
-                int extraSlotsNeeded = slot.getContainers().get(slot.getContainers().size()-1).getLc() - container.getLc();
-                // vind containers voor er rond en geef eerste slot van de volledige rij terug
-                Slot newSlot = checkSurroundingSlots(container, extraSlotsNeeded, container.getSlots().get(0));
-                if (newSlot == null)
-                    continue;
-                // verplaats container naar eerste slot van de rijd
-                moveContainer(slot.getContainers().get(slot.getContainers().size()-1), newSlot);
-                return;
-            }
 
         }
 
+        //TODO: als geen zwaardere container gevonden is die er automatisch opgeplaatst kan worden
+        for (Container c: containers){
+            // deel 1: zoek grotere zwaardere container
+            if (checkRestrictionHeavierContainer(c.getSlots().get(0))) {
+                if (c.getLc() > container.getLc()) {
+                    // hoeveel plaatsen nog op te vullen
+                    int extraSlotsNeeded = c.getLc() - container.getLc();
+                    // vind containers voor er rond en geef eerste slot van de volledige rij terug
+                    Container movableContainer = findFittingContainer(container, extraSlotsNeeded);
+                    if (movableContainer == null)
+                        continue;
+                    // als we verplaatsbare container hebben gevonden =>
+                    // containers boven de fittingContainer verplaatsen
+                    moveContainerAbove(movableContainer);
+
+                    // movableContainer voor of achter plaatsen
+                    Slot beginSlotBigContainer = placeMovableContainer(movableContainer, container);
+                    if (beginSlotBigContainer == null)
+                        continue;
+
+                    // grote container op de containers plaatsen
+                    moveContainer(c, beginSlotBigContainer);
+                    return;
+                }
+            }
+        }
+    }
+
+    private void moveContainerAbove(Container movableContainer) {
+        Slot slot = movableContainer.getSlots().get(0);
+        int heightMovableContainer = movableContainer.getSlots().get(0).getContainers().indexOf(movableContainer)+1;
+        for (int i = heightMovableContainer; i < movableContainer.getSlots().size(); i++) {
+            Container toBeReplacedContainer = slot.getContainers().get(i);
+            Slot newSlot = findSlots(toBeReplacedContainer);
+            moveContainer(toBeReplacedContainer, newSlot);
+        }
+    }
+
+    private Container findFittingContainer(Container container, int extraSlotsNeeded) {
+        for (Container c: containers) {
+            // niet dezelfde
+            if (container.equals(c)) {
+                continue;
+            }
+
+            // groot genoeg?
+            if (c.getLc() != extraSlotsNeeded)
+                continue;
+
+            // er mag geen container met gewicht 1 onder staan
+            boolean weightOne = false;
+            for (Slot s: c.getSlots()) {
+                int heightContainer = s.getContainers().indexOf(c);
+                if (heightContainer > 0)
+                    if (s.getContainers().get(heightContainer-1).getGc() == 1)
+                        weightOne = true;
+            }
+            if (weightOne)
+                continue;
+
+            return c;
+        }
+        return null;
+    }
+
+    private Slot placeMovableContainer(Container movableContainer, Container container) {
+        boolean voor = true;
+        boolean achter = true;
+        Slot beginSlot;
+        for (int i = 1; i < movableContainer.getLc()/Ls; i++) {
+            // voor
+            if (container.getSlots().get(0).getX() - movableContainer.getLc() >= 0) {
+                if (!slotlist.get(container.getSlots().get(0).getId()-i).getContainers().isEmpty()) {
+                    voor = false;
+                }
+            } else
+                voor = false;
+
+            // achter
+            if (container.getSlots().get(container.getSlots().size()-1).getX() + Ls + movableContainer.getLc() <= L) {
+                if (!slotlist.get(container.getSlots().get(container.getSlots().size()-1).getId()+i).getContainers().isEmpty()) {
+                    achter = false;
+                }
+            } else
+                achter = false;
+
+            if (!voor && !achter)
+                return null;
+        }
+        if (!voor && achter) {
+            beginSlot = container.getSlots().get(0);
+            moveContainer(movableContainer, slotlist.get(container.getSlots().get(container.getSlots().size()-1).getId()));
+        } else {
+            beginSlot = slotlist.get(container.getSlots().get(0).getId() - movableContainer.getLc()/Ls);
+            moveContainer(movableContainer, slotlist.get(container.getSlots().get(0).getId() - movableContainer.getLc()/Ls));
+        }
+        return beginSlot;
+    }
+
+    private boolean checkRestrictionHeavierContainer(Slot slot) {
+        // als geen slot niet checken
+        if (slot.getContainers().isEmpty())
+            return false;
+
+        // check gewicht > 1
+        if (!slot.checkWeight())
+            return false;
+
+        // check of eronder niet al 1 of meer containers met gewicht 1 staat
+        if (slot.getContainers().size() > 1) {
+            boolean movable = true;
+            for (int i = 0; i < slot.getTopContainer().getSlots().size(); i++) {
+                if ((slot.getTopContainer().getSlots().get(i).getContainers().get(slot.getContainers().size()-2).getGc() == 1)) {
+                    movable = false;
+                }
+            }
+            if (!movable) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public Slot checkSurroundingSlots(Container container, int extraSlotsNeeded, Slot slot) {
         Slot firstSlot = slot;
         // before current container
         // als eerste container => overslaan
-        if (container.getSlots().get(container.getSlots().get(0).getId()-1).getId() > 1) {
+        if (container.getSlots().get(0).getX() != 0) {
             // als geen containers voor => overslaan
             if (!slotlist.get(container.getSlots().get(0).getId()-1).getContainers().isEmpty()) {
                 Slot slotBefore = slotlist.get(container.getSlots().get(0).getId()-1);
@@ -193,7 +299,7 @@ public class Yard {
 
         // after current container
         // als laatste container => overslaan
-        if (container.getSlots().get(container.getSlots().size()-1).getId() != slotlist.size()) {
+        if (container.getSlots().get(0).getX() != L) {
             // als geen containers erna => overslaan
             if (!slotlist.get(container.getSlots().get(container.getSlots().size()-1).getId()+1).getContainers().isEmpty()) {
                 Slot slotAfter = slotlist.get(container.getSlots().get(container.getSlots().size()-1).getId()+1);
@@ -217,7 +323,12 @@ public class Yard {
     // zoek een mogelijk slot voor een container die niet voldoet aan de veiligheidsvoorschriften
     public Slot findSlots(Container container){
         for (int width = 0; width < slots[0].length; width++) {
-            for (int length = 0; length < slots.length-container.getSlots().size(); length++) {
+            for (int length = 0; length <= slots.length-container.getSlots().size(); length++) {
+
+                //niet hetzelfde slots
+                if(container.getSlots().contains(slots[length][width])) {
+                    continue;
+                }
 
                 //check max hoogte
                 if(slots[length][width].getContainers().size() + 1 > Hmax)
@@ -227,11 +338,11 @@ public class Yard {
                 if(!checkSameHeight(length, width, container))
                     continue;
 
-                //check sorted
-                if (!slots[length][width].isSorted(container))
+                //check sorted volledige lijn
+                if (!checkSorted(length, width, container))
                     continue;
 
-                //checkWeight
+                //checkWeight volledige lijn
                 if(!slots[length][width].checkWeight())
                     continue;
 
@@ -283,6 +394,16 @@ public class Yard {
             container.getSlots().add(slotlist.get(index+i));
         }
 
+    }
+
+
+    //controleer of alle opeenvolgende slots waar neen container in zou geplaatst worden, gesorteerd zou blijven
+    private boolean checkSorted(int length, int width, Container container) {
+        for (int i = 0; i < container.getSlots().size(); i++){
+            if(!slots[length+i][width].isSorted(container))
+                return false;
+        }
+        return true;
     }
 
     //controleer of alle opeenvolgende slots waar een container in zou geplaatst worden, dezelfde hoogte hebben
