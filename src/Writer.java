@@ -17,23 +17,6 @@ public class Writer {
                 myWriter.write("\n");
             }
 
-            // deze leek foute gevens te geven?
-            /*for (int i = 0; i < yard.getHmax(); i++) {
-                for (int j = 0; j < yard.getSlots()[0].length; j++) {
-                    for (int k = 0; k < yard.getSlots().length; k++) {
-                        if (yard.getSlots()[k][j].getContainers().size() > i) {
-                            myWriter.write(yard.getSlots()[k][j].getContainers().get(i).getId() + "," + yard.getSlots()[k][j].getId());
-                            int lengte = yard.getSlots()[k][j].getContainers().get(i).getLc()/yard.getLs();
-                            for (int l =1; l < lengte; l++) {
-                                myWriter.write("," + (yard.getSlots()[k][j].getId()+l));
-                            }
-                            k = k+lengte;
-                            myWriter.write("\n");
-                        }
-                    }
-                }
-            }*/
-
             //schrijf kraanbewegingen voor elke kraan
             myWriter.write("# kraanbewegingen (t,x,y)\n");
 

@@ -18,13 +18,14 @@ public class Main {
             Writer.write(args[1], yard);
         }
 
+        /* LABO 2 voorbeelden
+
         Yard yard = Reader.read("data/L500_W60_H3_Q1_C10.ysi");
         yard.checkContainers(); // visuele controle van yard
         yard.checkYard();
         yard.checkContainers(); // visuele controle van yard
         Writer.write("data/L500_W60_H3_Q1_C10.yso", yard);
-
-
+        */
 
 
         /* LABO 1 voorbeelden + JAR
@@ -47,7 +48,7 @@ public class Main {
 
         Yard yard3 = Reader.read("data/example.ysi");
         Writer.write("data/example.yso", yard3);
-         */
+        */
 
     }
 }
