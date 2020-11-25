@@ -5,6 +5,10 @@ public class Yard {
     private int L = 0; //totale lengte yard
     private int W = 0; //totale breedte yard
     private int Hmax = 0;
+    private int Hsafe = 0;
+
+    private int Xmax = 0;
+    private int Xmin = 0;
 
     private int Ls = 0; //lengte slot (10)
     private int Ws = 0; //breedte slot (12)
@@ -55,17 +59,19 @@ public class Yard {
                 for (int length = 0; length < slots.length; length++) {
                     //System.out.print(slots[k][j].getId() + " ");
                     if(height >= slots[length][width].getContainers().size())
-                        System.out.print("_");
-                    else
-                        System.out.print(Integer.toHexString(slots[length][width].getContainers().get(height).getId()));
+                        System.out.print("__");
+                    else{
+                        if (Integer.toHexString(slots[length][width].getContainers().get(height).getId()).length() == 1 )
+                            System.out.print("0" + Integer.toHexString(slots[length][width].getContainers().get(height).getId()));
+                        else
+                            System.out.print(Integer.toHexString(slots[length][width].getContainers().get(height).getId()));
+                    }
+
 
                 }
                 System.out.println();
             }
         }
-
-        for (Container container : containers)
-            System.out.println(container.getId() + " " + container.getGc());
     }
 
     //controleer of elk slot van Yard voldoet aan veiligheidsvoorschriften, verplaats containers indien dit niet het geval is
@@ -85,7 +91,7 @@ public class Yard {
             //kijken ofdat bovenste gewicht niet 1 is
             if (!slot.checkWeight()) {
                 // als max hoogte bereikt, eerst container verplaatsen
-                if (slot.getContainers().size() == Hmax) {
+                if (slot.getContainers().size() == Hsafe) {
                     Container container = slot.getTopContainer();
                     moveContainer(container, findSlots(container));
                     moveHeavierContainer(container);
@@ -97,9 +103,6 @@ public class Yard {
             }
 
         }
-
-        //eindpositie (0,0)
-        cranes.get(0).move(0,0);
 
     }
 
@@ -147,7 +150,7 @@ public class Yard {
 
         }
 
-        //TODO: als geen zwaardere container gevonden is die er automatisch opgeplaatst kan worden
+        //als geen zwaardere container gevonden is die er automatisch opgeplaatst kan worden
         for (Container c: containers){
             // deel 1: zoek grotere zwaardere container
             if (checkRestrictionHeavierContainer(c.getSlots().get(0))) {
@@ -331,7 +334,7 @@ public class Yard {
                 }
 
                 //check max hoogte
-                if(slots[length][width].getContainers().size() + 1 > Hmax)
+                if(slots[length][width].getContainers().size() + 1 > Hsafe)
                     continue;
 
                 //check zelfde hoogte
@@ -526,5 +529,29 @@ public class Yard {
 
     public void setContainers(List<Container> containers) {
         this.containers = containers;
+    }
+
+    public int getHsafe() {
+        return Hsafe;
+    }
+
+    public void setHsafe(int hsafe) {
+        Hsafe = hsafe;
+    }
+
+    public int getXmax() {
+        return Xmax;
+    }
+
+    public void setXmax(int xmax) {
+        Xmax = xmax;
+    }
+
+    public int getXmin() {
+        return Xmin;
+    }
+
+    public void setXmin(int xmin) {
+        Xmin = xmin;
     }
 }
