@@ -90,13 +90,8 @@ public class Reader {
             yard.setSlots(slots);
 
             if(yard.getCranes().size() == 2){
-                yard.setXmax(yard.getCranes().get(0).getXmax());
-                yard.setXmin(yard.getCranes().get(1).getXmin());
-
-                for (Crane crane : yard.getCranes()){
-                    crane.setZonemin(yard.getXmin());
-                    crane.setZonemax(yard.getXmax());
-                }
+                yard.setZoneMax(yard.getCranes().get(0).getXmax());
+                yard.setZoneMin(yard.getCranes().get(1).getXmin());
             }
 
             myReader.close();

@@ -7,8 +7,9 @@ public class Yard {
     private int Hmax = 0;
     private int Hsafe = 0;
 
-    private int Xmax = 0;
-    private int Xmin = 0;
+    // min and max x value of zone
+    private int zoneMin;
+    private int zoneMax;
 
     private int Ls = 0; //lengte slot (10)
     private int Ws = 0; //breedte slot (12)
@@ -57,7 +58,11 @@ public class Yard {
             System.out.println("Height " + height + ":");
             for (int width = 0; width < slots[0].length; width++) {
                 for (int length = 0; length < slots.length; length++) {
-                    //System.out.print(slots[k][j].getId() + " ");
+
+                    // restrictiezone
+                    if(length == zoneMin/Ls || length == zoneMax/Ls)
+                        System.out.print("  ");
+
                     if(height >= slots[length][width].getContainers().size())
                         System.out.print("__");
                     else{
@@ -66,8 +71,6 @@ public class Yard {
                         else
                             System.out.print(Integer.toHexString(slots[length][width].getContainers().get(height).getId()));
                     }
-
-
                 }
                 System.out.println();
             }
@@ -75,13 +78,35 @@ public class Yard {
     }
 
     //controleer of elk slot van Yard voldoet aan veiligheidsvoorschriften, verplaats containers indien dit niet het geval is
-    //beweeg naar eindpositie (0,0) zodra alle veiligheidsvoorschriften voldaan zijn
     public void checkYard(){
 
-        for (Slot slot : slotlist){
+        // alle containers sorteren op gewicht (zwaarste bovenaan)
+        sortContainers();
 
-            // controle of alles gestorteerd + verplaatsen
-            controlSorted();
+        // veranker lichte containers door er zwaardere op te plaatsen
+        anchorContainers();
+
+    }
+
+    private void sortContainers() {
+        for (Slot slot: slotlist) {
+
+            //indien geen containers => veiligheidsvoorschriften voldaan
+            if (slot.getContainers().isEmpty())
+                continue;
+
+            // alle containers sorteren op gewicht (zwaarste bovenaan)
+            while(!slot.isSorted()){
+                Container topContainer = slot.getContainers().get(slot.getContainers().size()-1);
+                Slot newSlot = findSlots(topContainer);
+                moveContainer(topContainer, newSlot);
+                slot = slotlist.get(0);
+            }
+        }
+    }
+
+    private void anchorContainers(){
+        for (Slot slot : slotlist){
 
             //indien geen containers => veiligheidsvoorschriften voldaan
             if (slot.getContainers().isEmpty())
@@ -95,27 +120,10 @@ public class Yard {
                     Container container = slot.getTopContainer();
                     moveContainer(container, findSlots(container));
                     moveHeavierContainer(container);
-                // anders direct zwaardere erop zetten
+                    // anders direct zwaardere erop zetten
                 } else {
                     moveHeavierContainer(slot.getTopContainer());
                 }
-
-            }
-
-        }
-
-    }
-
-    private void controlSorted() {
-        for (Slot slot: slotlist) {
-            if (slot.getContainers().isEmpty())
-                continue;
-
-            while(!slot.isSorted()){
-                Container topContainer = slot.getContainers().get(slot.getContainers().size()-1);
-                Slot newSlot = findSlots(topContainer);
-                moveContainer(topContainer, newSlot);
-                slot = slotlist.get(0);
             }
         }
     }
@@ -363,13 +371,141 @@ public class Yard {
     //verplaats een container naar een nieuwe locatie (geef enkel eerste slot mee, andere slots volgen logisch)
     public void moveContainer(Container container, Slot newSlot){
 
-        Crane crane = cranes.get(0);
+        int newLocation = newSlot.getX() + container.getLc()/2;
 
-        //move crane to new location + pick up container
+        //indien 1 kraan niet van container naar bestemming kan, zoek tijdelijke plaats in restrictiezone zodat andere kraan container kan verplaatsen naar bestemming
+        if ((container.bepaalX() < zoneMin && newLocation > zoneMax) || (container.bepaalX() > zoneMax && newLocation < zoneMin))
+            moveContainerThroughZone(container, newSlot);
+
+        //indien 1 kraan wel van container naar bestemming kan => voer uit
+        else {
+            //kies juiste kraan (indien container niet in restrictiezone => kies kraan in gebied), indien wel in zone, kies kraan die achterloopt in tijd)
+            Crane crane = findCrane(container, newSlot);
+
+            //indien verplaatsing door restrictiezone moet => controleer of andere kraan niet in zone zal zijn dmv tijd en movements
+            if (checkTiming(crane, container, newSlot) == 0){
+                System.out.println("From: " + container.bepaalX() + " to " + newLocation);
+                pickUpContainer(crane, container);
+                dropContainer(crane, container, newSlot);
+            }
+            else{
+                //wait
+                //pickUpContainer(crane, container);
+                //dropContainer(crane, container, newSlot);
+
+            }
+        }
+    }
+
+    //kies juiste kraan
+    private Crane findCrane (Container container, Slot newSlot){
+        int newLocation = newSlot.getX() + container.getLc()/2;
+
+        //buiten reservatiezone
+        if (container.bepaalX() <= zoneMin)
+            return cranes.get(0);
+        else if (container.bepaalX() >= zoneMax)
+            return cranes.get(1);
+
+        //binnen reservatiezone en verplaatsing uit zone
+        else if (container.bepaalX() <= zoneMax && newLocation <= zoneMax)
+            return cranes.get(0);
+        else if (container.bepaalX() >= zoneMin && newLocation >= zoneMin)
+            return cranes.get(1);
+
+        //binnen reservatiezone en verplaatsing binnen zone => kies achterlopende kraan in tijd
+        else if (container.bepaalX() <= zoneMax && container.bepaalX() >= zoneMin && newLocation <= zoneMax &&  newLocation >= zoneMin){
+            if (cranes.get(0).getCraneRoute().getTime() < cranes.get(1).getCraneRoute().getTime())
+                return cranes.get(0);
+            else
+                return cranes.get(1);
+        }
+
+        return null;
+    }
+
+    private void moveContainerThroughZone(Container container, Slot newSlot){
+
+        Slot temp = findTemporarySlotInZone(container);
+        int a = temp.getX()+container.getLc()/2;
+        int b = newSlot.getX()+container.getLc()/2;
+        System.out.println("From: " + container.bepaalX() + " to " + a + " to " + b);
+
+        //call moveContainer 2 keer:
+        moveContainer(container, temp);
+
+        moveContainer(container, newSlot);
+
+    }
+
+    //zoek plaats in restrictiezone voor doorgeven container
+    private Slot findTemporarySlotInZone(Container container){
+
+        //halve container mag buiten zone, enkel middelpunt moet in zone
+        int halfContainerSize = container.getSlots().size()/2;
+
+        for (int width = 0; width < slots[0].length; width++) {
+            for (int length = zoneMin/Ls-halfContainerSize; length <= zoneMax/Ls-halfContainerSize; length++) {
+
+                System.out.println(length);
+
+                //niet hetzelfde slots => kan nooit door oproepen methode
+                //if(container.getSlots().contains(slots[length][width]))
+                //    continue;
+
+                //check max hoogte (temporary: Hmax ipv Hsafe)
+                if(slots[length][width].getContainers().size() + 1 > Hmax)
+                    continue;
+
+                //check zelfde hoogte
+                if(!checkSameHeight(length, width, container))
+                    continue;
+
+                //temporary => check sorted volledige lijn niet nodig
+                //if (!checkSorted(length, width, container))
+                //    continue;
+
+                //temporary => checkWeight volledige lijn niet nodig
+                //if(!slots[length][width].checkWeight())
+                //    continue;
+
+                if (!checkSameLength(length, width, container))
+                    continue;
+
+                return slots[length][width];
+
+            }
+        }
+
+        return null;
+    }
+
+    //TODO: indien verplaatsing door restrictiezone moet => controleer of andere kraan niet in zone zal zijn dmv tijd en movements
+    //taak enkel toekennen aan 2e kraan als eerste kraan minstens deze duratie verder zit in tijdlijn??
+    private int checkTiming(Crane crane, Container container, Slot newSlot){
+        //controleer andere kranen op tijd dat verplaatsing zal gebeuren
+        /*
+        for (Crane othercrane : getCranes()){
+            if (crane == othercrane)
+                continue;
+
+        }
+
+         */
+
+        //indien niet door zone => return 0
+        return 0;
+
+        //indien wel door zone => return int voor wachttijd
+    }
+
+    //move crane to new location + pick up container
+    private void pickUpContainer(Crane crane, Container container){
+
         crane.moveContainer(container.bepaalX(), container.bepaalY(Ws), container);
 
         //remove container from slots
-        //zoek eerst slot van huidige locatie van container in lijst
+        //zoek eerste slot van huidige locatie van container in lijst
         int index = slotlist.indexOf(container.getSlots().get(0));
         //verwijder container uit alle slots
         for (int i = 0; i<container.getSlots().size(); i++){
@@ -378,29 +514,28 @@ public class Yard {
 
         //remove slots from container
         container.getSlots().clear();
+    }
 
-        //move crane to new location + drop container
+    //move crane to new location + drop container
+    private void dropContainer(Crane crane, Container container, Slot newSlot){
         //middelpunt nieuwe locatie bepalen
         int nextX = newSlot.getX() + container.getLc()/2;
         int nextY = newSlot.getY() + Ws/2;
         crane.moveContainer(nextX, nextY, container);
 
         //add container to slots
-        //zoek slot in lijst
-        index = slotlist.indexOf(newSlot);
+        //zoek eerste slot van nieuwe locatie in lijst
+        int index = slotlist.indexOf(newSlot);
         for (int i = 0; i<container.getLc()/Ls; i++){
             Slot slot = slotlist.get(index+i);
             slot.addContainer(container);
-            //slotlist.get(index+i).addContainer(container);
 
             //add slot to container
             container.getSlots().add(slotlist.get(index+i));
         }
-
     }
 
-
-    //controleer of alle opeenvolgende slots waar neen container in zou geplaatst worden, gesorteerd zou blijven
+    //controleer of alle opeenvolgende slots waar een container in zou geplaatst worden, gesorteerd zou blijven
     private boolean checkSorted(int length, int width, Container container) {
         for (int i = 0; i < container.getSlots().size(); i++){
             if(!slots[length+i][width].isSorted(container))
@@ -439,7 +574,7 @@ public class Yard {
                 bottomContainers.add(stack.get(stack.size()-1));
             }
 
-            // tel alle lengten van onderliggende containers op, indien deze gelijk is aan de lengte van de te plaasten container is deze check true, anders false
+            // tel alle lengten van onderliggende containers op, indien deze gelijk is aan de lengte van de te plaatsen container is deze check true, anders false
             int totalLength = 0;
             for (Container c : bottomContainers){
                 totalLength = totalLength + c.getLc();
@@ -539,19 +674,19 @@ public class Yard {
         Hsafe = hsafe;
     }
 
-    public int getXmax() {
-        return Xmax;
+    public int getZoneMin() {
+        return zoneMin;
     }
 
-    public void setXmax(int xmax) {
-        Xmax = xmax;
+    public void setZoneMin(int zoneMin) {
+        this.zoneMin = zoneMin;
     }
 
-    public int getXmin() {
-        return Xmin;
+    public int getZoneMax() {
+        return zoneMax;
     }
 
-    public void setXmin(int xmin) {
-        Xmin = xmin;
+    public void setZoneMax(int zoneMax) {
+        this.zoneMax = zoneMax;
     }
 }

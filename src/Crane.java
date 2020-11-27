@@ -5,9 +5,6 @@ public class Crane {
     private int y;
     private int xmin;
     private int xmax;
-    private int zonemin;
-    private int zonemax;
-    private boolean inZone;
     private CraneRoute craneRoute;
 
     public Crane(String id, String x, String y, String z, String a) {
@@ -24,11 +21,6 @@ public class Crane {
         //verplaatsing opslaan
         craneRoute.move(id, x, y, nextX, nextY);
 
-        if (nextX > zonemin && nextX < zonemax)
-            inZone = true;
-        else
-            inZone = false;
-
         //verplaats kraan naar nieuwe positie
         setX(nextX);
         setY(nextY);
@@ -38,11 +30,6 @@ public class Crane {
     public void moveContainer(int nextX, int nextY, Container container){
         //verplaatsing opslaan
         craneRoute.moveContainer(id, x, y, nextX, nextY, container);
-
-        if (nextX > zonemin && nextX < zonemax)
-            inZone = true;
-        else
-            inZone = false;
 
         //verplaats kraan naar nieuwe positie
         setX(nextX);
@@ -95,29 +82,5 @@ public class Crane {
 
     public void setXmax(int xmax) {
         this.xmax = xmax;
-    }
-
-    public int getZonemin() {
-        return zonemin;
-    }
-
-    public void setZonemin(int zonemin) {
-        this.zonemin = zonemin;
-    }
-
-    public int getZonemax() {
-        return zonemax;
-    }
-
-    public void setZonemax(int zonemax) {
-        this.zonemax = zonemax;
-    }
-
-    public boolean isInZone() {
-        return inZone;
-    }
-
-    public void setInZone(boolean inZone) {
-        this.inZone = inZone;
     }
 }
