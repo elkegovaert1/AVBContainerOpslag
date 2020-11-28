@@ -75,7 +75,7 @@ public class Reader {
                             // Voeg container toe aan gegeven slots
                             for (int i = 1; i < split6.length; i++) {
                                 Slot s = yard.getSlotlist().get(Integer.parseInt(split6[i]) - 1);
-                                s.addContainer(c);
+                                s.addContainer(c, 0);
                                 if (s.getContainers().size() > yard.getCurrentHeight()) {
                                     yard.setCurrentHeight(s.getContainers().size());
                                 }

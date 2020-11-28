@@ -8,6 +8,8 @@ public class Slot implements Comparable<Slot>{
     private int x;
     private int y;
 
+    private int lastChange;
+
     private List<Container> containers;
 
     public Slot(String id) {
@@ -15,11 +17,13 @@ public class Slot implements Comparable<Slot>{
         this.containers = new ArrayList<>();
     }
 
-    public void addContainer(Container container) {
+    public void addContainer(Container container, int time) {
         containers.add(container);
+        this.lastChange = time;
     }
 
-    public Container removeContainer(){
+    public Container removeContainer(int time){
+        this.lastChange = time;
         return containers.remove(containers.size()-1);
     }
 
@@ -89,6 +93,14 @@ public class Slot implements Comparable<Slot>{
 
     public int getY() {
         return y;
+    }
+
+    public int getLastChange() {
+        return lastChange;
+    }
+
+    public void setLastChange(int lastChange) {
+        this.lastChange = lastChange;
     }
 
     //sorteer slots op x waarde

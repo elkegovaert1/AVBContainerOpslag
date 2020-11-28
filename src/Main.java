@@ -18,11 +18,11 @@ public class Main {
             Writer.write(args[1], yard);
         }
 
-        Yard yard = Reader.read("data/L400_W120_H3_Q2_C180_S2.ysi");
+        Yard yard = Reader.read("data/example2.ysi");
         yard.checkContainers(); // visuele controle van yard
         yard.checkYard();
         yard.checkContainers(); // visuele controle van yard
-        Writer.write("data/L400_W120_H3_Q2_C180_S2.yso", yard);
+        Writer.write("data/example2.yso", yard);
 
         /* LABO 2 voorbeelden + jar
         // argumenten voor JAR
