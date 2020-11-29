@@ -390,10 +390,21 @@ public class Yard {
             System.out.println("From: " + container.bepaalX() + " to " + newLocation + " with waiting time " + time + " by crane " + crane.getId());
             if (time == 0){
                 //System.out.println("From: " + container.bepaalX() + " to " + newLocation);
+
+                //TODO: controle dat als we een container verplaatsen dat een andere crane niet bezig is met deze te verplaatsen op die moment
+                // => controleer of tijd van de kraan achter tijd van laatste aanpassing aan slot komt => container zal zeker neergeplaatst zijn voordat andere kraan hem oppikt
+                if (container.getSlots().get(0).getLastChange() > crane.getTime()){
+                    crane.setTime(container.getSlots().get(0).getLastChange()); //wait
+                    crane.move(crane.getX(), crane.getY());
+                    System.out.println("wait for movement other crane");
+                }
+
                 pickUpContainer(crane, container);
                 dropContainer(crane, container, newSlot);
             }
             else{
+                // => controleer of tijd van de kraan achter tijd van laatste aanpassing aan slot komt => container zal zeker neergeplaatst zijn voordat andere kraan hem oppikt    
+                time = Math.max(time, container.getSlots().get(0).getLastChange());
                 crane.setTime(crane.getTime() + time); //wait
                 crane.move(crane.getX(), crane.getY());
                 pickUpContainer(crane, container);
