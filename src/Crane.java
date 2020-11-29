@@ -5,7 +5,6 @@ public class Crane {
     private int y;
     private int xmin;
     private int xmax;
-    private int time;
     private CraneRoute craneRoute;
 
     public Crane(String id, String x, String y, String z, String a) {
@@ -15,13 +14,12 @@ public class Crane {
         this.xmin = Integer.parseInt(z);
         this.xmax = Integer.parseInt(a);
         this.craneRoute = new CraneRoute(this.id, this.x, this.y);
-        this.time = 0;
     }
 
     //gebruikt bij verplaatsing zonder opnemen of neerplaatsen container (vb. eindpositie of bij labo 1)
     public void move(int nextX, int nextY){
         //verplaatsing opslaan
-        this.time = time + craneRoute.move(id, x, y, nextX, nextY);
+        craneRoute.move(id, x, y, nextX, nextY);
 
         //verplaats kraan naar nieuwe positie
         setX(nextX);
@@ -31,7 +29,7 @@ public class Crane {
     //gebruikt bij verplaatsing naar container (+ opnemen of neerplaatsen)
     public void moveContainer(int nextX, int nextY, Container container){
         //verplaatsing opslaan
-        this.time = time + craneRoute.moveContainer(id, x, y, nextX, nextY, container);
+        craneRoute.moveContainer(id, x, y, nextX, nextY, container);
 
         //verplaats kraan naar nieuwe positie
         setX(nextX);
@@ -86,12 +84,4 @@ public class Crane {
         this.xmax = xmax;
     }
 
-    public int getTime() {
-        return time;
-    }
-
-    public void setTime(int time) {
-        this.time = time;
-        this.craneRoute.setTime(time);
-    }
 }
