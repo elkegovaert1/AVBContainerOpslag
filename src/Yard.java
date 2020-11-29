@@ -387,7 +387,7 @@ public class Yard {
 
             //indien verplaatsing door restrictiezone moet => controleer of andere kraan niet in zone zal zijn dmv tijd en movements
             int waitTime = checkTiming(crane, container, newSlot);
-            System.out.println("From: " + container.bepaalX() + " to " + newLocation + " with waiting time " + waitTime + " by crane " + crane.getId());
+            //System.out.println("From: " + container.bepaalX() + " to " + newLocation + " with waiting time " + waitTime + " by crane " + crane.getId());
             if (waitTime == 0){
                 //System.out.println("From: " + container.bepaalX() + " to " + newLocation);
 
@@ -446,7 +446,7 @@ public class Yard {
         Slot temp = findTemporarySlotInZone(container);
         int a = temp.getX()+container.getLc()/2;
         int b = newSlot.getX()+container.getLc()/2;
-        System.out.println("From: " + container.bepaalX() + " to " + a + " to " + b);
+        //System.out.println("From: " + container.bepaalX() + " to " + a + " to " + b);
 
         //call moveContainer 2 keer:
 
@@ -465,7 +465,7 @@ public class Yard {
         for (int width = 0; width < slots[0].length; width++) {
             for (int length = zoneMin/Ls-halfContainerSize; length <= zoneMax/Ls-halfContainerSize; length++) {
 
-                System.out.println(length);
+                //System.out.println(length);
 
                 //niet hetzelfde slots => kan nooit door oproepen methode
                 //if(container.getSlots().contains(slots[length][width]))
@@ -566,9 +566,9 @@ public class Yard {
             if (currentOtherCraneMovement.getNextX() < zoneMin || currentOtherCraneMovement.getNextX() > zoneMax) {
                 int t = timeToRestrictionBorder(container,newSlot,"out") - totalTimeToBorder;
 
-                System.out.println("Kraan kan van 1ste keer direct naar buiten gaan met " + t);
-                System.out.println("Crane is: " + crane.getX() + " | Other is: " + othercrane.getX());
-                System.out.println();
+                //System.out.println("Kraan kan van 1ste keer direct naar buiten gaan met " + t);
+                //System.out.println("Crane is: " + crane.getX() + " | Other is: " + othercrane.getX());
+                //System.out.println();
 
                 if (t < 0) {
                     return 0;
@@ -597,8 +597,8 @@ public class Yard {
                 if (movementOutOfZone == null) { // als er geen volgende bewegingen maar zijn => ga uit restriction zone
                     // tijd van verplaatsing othercrane uit zone - tijd van currentcrane in de zone te gaan
                     int timeToWait = moveCraneOutOfZone(othercrane) - totalTimeToBorder;
-                    System.out.println("Kraan " + othercrane.getId() +" gaat vrijwillig naar buiten met wait: " + timeToWait);
-                    System.out.println();
+                    //System.out.println("Kraan " + othercrane.getId() +" gaat vrijwillig naar buiten met wait: " + timeToWait);
+                    //System.out.println();
 
                     if (timeToWait < 0) {
                         return 0;
@@ -608,8 +608,8 @@ public class Yard {
                 } else {
                     int time = timeToRestrictionBorderMovement(movementOutOfZone, "out");
                     int timePassed = movementOutOfZone.getTime() - startTime;
-                    System.out.println("Kraan " + othercrane.getId() + " kan na enkele stappen naar buiten: " + (timePassed + time));
-                    System.out.println();
+                    //System.out.println("Kraan " + othercrane.getId() + " kan na enkele stappen naar buiten: " + (timePassed + time));
+                    //System.out.println();
 
                     return timePassed + time; // tijd vanaf we erin willen tot hij er effectief uit is
 
@@ -630,8 +630,8 @@ public class Yard {
         int timeToContainer = Math.max(Math.abs(crane.getX() - container.bepaalX()), Math.abs(crane.getY() - container.bepaalY(container.getLc())));
         int timeToRestrictionBorder = timeToRestrictionBorder(container, newSlot, "in");
         if (timeToRestrictionBorder == 0) {
-            System.out.println("Crane not in restriction zone");
-            System.out.println("Crane is: " + crane.getX() + " | Slot is: " + newSlot.getX() + " | Container is: " + container.bepaalX());
+            //System.out.println("Crane not in restriction zone");
+            //System.out.println("Crane is: " + crane.getX() + " | Slot is: " + newSlot.getX() + " | Container is: " + container.bepaalX());
             return 0;
         }
 
@@ -673,9 +673,9 @@ public class Yard {
 
             // als kraan van de 1e keer naar buiten gaat
             if (currentOtherCraneMovement.getNextX() < zoneMin || currentOtherCraneMovement.getNextX() > zoneMax) {
-                System.out.println("Kraan kan van 1ste keer direct naar buiten gaan");
-                System.out.println("Crane is: " + crane.getX()+ ", " + crane.getY());
-                System.out.println("Other crane is: " + crane.getX()+ ", " + crane.getY());
+                //System.out.println("Kraan kan van 1ste keer direct naar buiten gaan");
+                //System.out.println("Crane is: " + crane.getX()+ ", " + crane.getY());
+                //System.out.println("Other crane is: " + crane.getX()+ ", " + crane.getY());
 
                 return timeToRestrictionBorder(container,newSlot,"out") - totalTimeToBorder;
 
@@ -699,7 +699,7 @@ public class Yard {
 
                 if (movementOutOfZone == null) {
                     // tijd van verplaatsing othercrane uit zone - tijd van currentcrane in de zone te gaan
-                    System.out.println("Kraan kan na enkele stappen naar buiten gaan");
+                    //System.out.println("Kraan kan na enkele stappen naar buiten gaan");
                     return moveCraneOutOfZone(othercrane) - totalTimeToBorder;
                 } else {
                     int time = timeToRestrictionBorderMovement(movementOutOfZone, "out");
