@@ -59,10 +59,6 @@ public class Yard {
             for (int width = 0; width < slots[0].length; width++) {
                 for (int length = 0; length < slots.length; length++) {
 
-                    // restrictiezone
-                    if(length == zoneMin/Ls || length == zoneMax/Ls)
-                        System.out.print("  ");
-
                     if(height >= slots[length][width].getContainers().size())
                         System.out.print("__");
                     else{
@@ -417,6 +413,7 @@ public class Yard {
     //kies juiste kraan
     private Crane findCrane (Container container, Slot newSlot){
         int newLocation = newSlot.getX() + container.getLc()/2;
+
 
         //buiten reservatiezone
         if (container.bepaalX() <= zoneMin)

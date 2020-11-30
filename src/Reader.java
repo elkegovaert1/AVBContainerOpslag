@@ -54,7 +54,7 @@ public class Reader {
                         data = myReader.nextLine();
                         while (!data.equals("# containers")) {
                             String[] split4 = data.split(",");
-                            yard.getCranes().add(new Crane(split4[0], split4[1], split4[2], split4[3], split4[4]));
+                            yard.getCranes().add(new Crane(split4[0], split4[1], split4[2], split4[3]));
                             data = myReader.nextLine();
                         }
                         break;
@@ -89,10 +89,12 @@ public class Reader {
             }
             yard.setSlots(slots);
 
+            /*
             if(yard.getCranes().size() == 2){
                 yard.setZoneMax(yard.getCranes().get(0).getXmax());
                 yard.setZoneMin(yard.getCranes().get(1).getXmin());
             }
+             */
 
             myReader.close();
 

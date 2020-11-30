@@ -5,16 +5,14 @@ public class Crane {
     private int id;
     private int x;
     private int y;
-    private int xmin;
-    private int xmax;
+    private int xsafe;
     private CraneRoute craneRoute;
 
-    public Crane(String id, String x, String y, String z, String a) {
+    public Crane(String id, String x, String y, String z) {
         this.id = Integer.parseInt(id);
         this.x = Integer.parseInt(x);
         this.y = Integer.parseInt(y);
-        this.xmin = Integer.parseInt(z);
-        this.xmax = Integer.parseInt(a);
+        this.xsafe = Integer.parseInt(z);
         this.craneRoute = new CraneRoute(this.id, this.x, this.y);
     }
 
@@ -39,7 +37,7 @@ public class Crane {
     }
 
     // -1 als nog niet zo ver
-    private int getZoneMinOnCertainTime(int time) {
+    private int getZoneOnCertainTime(int time) {
 
         int currentX = this.getX();
         int currentY = this.getY();
@@ -122,20 +120,19 @@ public class Crane {
         this.craneRoute = craneRoute;
     }
 
-    public int getXmin() {
-        return xmin;
+    public int getXsafe() {
+        return xsafe;
     }
 
-    public void setXmin(int xmin) {
-        this.xmin = xmin;
+    public void setXsafe(int xsafe) {
+        this.xsafe = xsafe;
     }
 
-    public int getXmax() {
-        return xmax;
+    public int getXmin(int time) {
+        return getZoneOnCertainTime(time)-xsafe;
     }
 
-    public void setXmax(int xmax) {
-        this.xmax = xmax;
+    public int getXmax(int time) {
+        return getZoneOnCertainTime(time)+xsafe;
     }
-
 }

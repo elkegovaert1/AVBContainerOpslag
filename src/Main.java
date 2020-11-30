@@ -9,7 +9,7 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args) {
 
-        //LABO 3
+        //LABO 4
 
         // argumenten voor JAR
         if(args.length == 2){
@@ -17,6 +17,18 @@ public class Main {
             yard.checkYard();
             Writer.write(args[1], yard);
         }
+
+        //LABO 4
+        //L400_W120_H3_Q2_C120_S3(new)
+        //L400_W120_H3_Q2_C180_S2(new)
+        Yard yard = Reader.read("data/L400_W120_H3_Q2_C120_S3(new).ysi");
+        yard.checkContainers(); // visuele controle van yard
+        /*
+        yard.checkYard();
+        yard.checkContainers(); // visuele controle van yard
+        Writer.write("data/L400_W120_H3_Q2_C120_S3(new).yso", yard);
+         */
+
 
         //LABO 3 voorbeelden
         //L400_W120_H3_Q2_C120_S3
