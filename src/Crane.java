@@ -1,3 +1,5 @@
+import java.util.List;
+
 public class Crane {
 
     private int id;
@@ -36,6 +38,58 @@ public class Crane {
         //verplaats kraan naar nieuwe positie
         setX(nextX);
         setY(nextY);
+    }
+
+    // -1 als nog niet zo ver
+    private int getZoneMinOnCertainTime(int time) {
+
+        int currentX = this.getX();
+        int currentY = this.getY();
+        int endX = this.getX();
+        int endY = this.getY();
+
+        CraneMovement currentCM = null;
+        for (CraneMovement cm: craneRoute.getMovements()) {
+            if (cm.getTime() > time) {
+                currentCM = cm;
+                break;
+            }
+        }
+
+        if (currentCM == null) {
+            return -1;
+        }
+
+        // als X langere weg dan Y => true
+        boolean lengthOrWidth = Math.abs(currentCM.getX() - currentCM.getNextX()) >= Math.abs(currentCM.getY() - currentCM.getNextY());
+
+        // check of we van links naar rechts of averechts bewegen
+        boolean linksNaarRechts = currentCM.getX() <= currentCM.getNextX();
+        // boven of onder
+        boolean onderNaarBoven = currentCM.getY() <= currentCM.getNextY();
+
+        // wat is exacte X of Y-waarde op moment
+        int position;
+        if (linksNaarRechts && lengthOrWidth) { // als van links naar rechts en we kijken over X
+            position = this.getX() + (time - currentCM.getTime());
+        } else if (!linksNaarRechts && lengthOrWidth) { // als van rechts naar links en we kijken over X
+            position = this.getX() - (time - currentCM.getTime());
+        } else if (onderNaarBoven && !lengthOrWidth) { // als onder naar boven en we kijken over Y
+            position = this.getY() + (time - currentCM.getTime());
+        } else {
+            position = this.getY() - (time - currentCM.getTime());
+        }
+
+        // minpunt op bepaalde tijd
+        if (lengthOrWidth) { // over X
+            return position;
+        } else { // over Y
+            int X = ((endX-currentX)/(endY-currentY))*(position-currentY) + currentX;
+            if (X < 0 || X > Yard.getL()) {
+                return 0; // kruising onder/boven yard => niet bestaand
+            }
+            return X;
+        }
     }
 
     public int getId() {
