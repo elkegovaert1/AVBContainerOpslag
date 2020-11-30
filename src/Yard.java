@@ -2,8 +2,8 @@ import java.util.*;
 
 public class Yard {
 
-    private int L = 0; //totale lengte yard
-    private int W = 0; //totale breedte yard
+    private static int L = 0; //totale lengte yard
+    private static int W = 0; //totale breedte yard
     private int Hmax = 0;
     private int Hsafe = 0;
 
@@ -882,7 +882,7 @@ public class Yard {
         }
     }
 
-    public int getL() {
+    public static int getL() {
         return L;
     }
 
@@ -890,7 +890,7 @@ public class Yard {
         L = l;
     }
 
-    public int getW() {
+    public static int getW() {
         return W;
     }
 
