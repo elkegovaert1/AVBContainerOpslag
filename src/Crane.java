@@ -69,11 +69,13 @@ public class Crane implements Comparable<Crane>{
     private int getCraneLocation(int time) {
 
         CraneMovement currentCM = null;
+        CraneMovement loopCM = null;
         for (CraneMovement cm: craneRoute.getMovements()) {
-            if (cm.getTime() > time) {
-                currentCM = cm;
+            if (cm.getTime() >= time) {
+                currentCM = loopCM;
                 break;
             }
+            loopCM = cm;
         }
 
         if (currentCM == null) {
@@ -96,24 +98,27 @@ public class Crane implements Comparable<Crane>{
         // wat is exacte X of Y-waarde op moment
         int position;
         if (linksNaarRechts && lengthOrWidth) { // als van links naar rechts en we kijken over X
-            position = this.getX() + (time - currentCM.getTime());
+            position = currentX + (time - currentCM.getTime());
         } else if (!linksNaarRechts && lengthOrWidth) { // als van rechts naar links en we kijken over X
-            position = this.getX() - (time - currentCM.getTime());
+            position = currentX - (time - currentCM.getTime());
         } else if (onderNaarBoven && !lengthOrWidth) { // als onder naar boven en we kijken over Y
-            position = this.getY() + (time - currentCM.getTime());
+            position = currentY + (time - currentCM.getTime());
         } else {
-            position = this.getY() - (time - currentCM.getTime());
+            position = currentY - (time - currentCM.getTime());
         }
 
         // minpunt op bepaalde tijd
         if (lengthOrWidth) { // over X
             return position;
         } else { // over Y
-            int X = ((endX-currentX)/(endY-currentY))*(position-currentY) + currentX;
+            double X1 = (double)endX - (double)currentX;
+            double X2 = (double)endY - (double)currentY;
+            double X = (X1/X2)*(position-currentY) + currentX;
+            int x_int = (int)Math.round(X);
             if (X < 0 || X > Yard.getL()) {
                 return 0; // kruising onder/boven yard => niet bestaand
             }
-            return X;
+            return (int)X;
         }
     }
 
