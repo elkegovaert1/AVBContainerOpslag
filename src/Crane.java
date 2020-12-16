@@ -69,17 +69,15 @@ public class Crane implements Comparable<Crane>{
     private int getCraneLocation(int time) {
 
         CraneMovement currentCM = null;
-        CraneMovement loopCM = null;
-        for (CraneMovement cm: craneRoute.getMovements()) {
-            if (cm.getTime() >= time) {
-                currentCM = loopCM;
+        for (int i = 0; i < craneRoute.getMovements().size(); i++) {
+            if (craneRoute.getMovements().get(i).getTime() > time) {
+                currentCM = craneRoute.getMovements().get(i-1);
                 break;
             }
-            loopCM = cm;
         }
 
         if (currentCM == null) {
-            return -1;
+            return this.x;
         }
 
         int currentX = currentCM.getX();
