@@ -13,14 +13,14 @@ public class Main {
 
         //L400_W120_H3_Q2_C120_S3(new)
         //L400_W120_H3_Q2_C180_S2(new)
-        Yard yard = Reader.read("data/L400_W120_H3_Q2_C120_S3(new).ysi");
+        Yard yard = Reader.read("data/example3.ysi");
         yard.calculateEffectiveCraneBorders();
 
         yard.checkContainers();
         yard.checkYard();
         yard.checkContainers();
 
-        Writer.write("data/L400_W120_H3_Q2_C120_S3(new).yso", yard);
+        Writer.write("data/example3.yso", yard);
 
 
         //--------------------------------------------- LAB 3 ---------------------------------------------

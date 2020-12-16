@@ -424,79 +424,92 @@ public class Yard {
             //indien 1 kraan wel van container naar bestemming kan => find the best crane to perform the movement
             Crane crane = findCrane(container, newSlot, possibleCranes);
 
-            //check if the crane movement will interfere with other cranes, move these cranes if necessary
-            //wait in same location until other crane starts moving to keep safe distance
-            int startMovementTime  = checkCraneInterference(crane, dropLocation);
 
-            //check last change of a slot to keep correct sequence of containermovements for that slot
-            int lastChange = 0;
-            for(Slot slot : container.getSlots())
-                lastChange = Math.max(lastChange, slot.getLastChange());
-
-            // wait until change to slot happens
-            if (lastChange > crane.getCraneRoute().getTime()){
-                crane.wait(lastChange);
-            }
-
-            //perform actual container movement
+            checkCraneInterference(crane, pickupLocation);
+            checkMovementSequence(crane, container);
             pickUpContainer(crane, container);
+
+
+            checkCraneInterference(crane, dropLocation);
+            checkMovementSequence(crane, container);
             dropContainer(crane, container, newSlot);
         }
 
     }
 
-    private int checkCraneInterference(Crane crane, int newLocation){
+    private void checkCraneInterference(Crane crane, int newLocation){
 
-        int currentTime = crane.getCraneRoute().getTime();
+        //check if neighbouring crane has to move
+        int index = cranes.indexOf(crane);
 
-        int maxStartMovementTime = 0;
+        //if there is a leftneighbour and crane has to move left
+        if (index > 0 && newLocation < crane.getX()){
+            Crane leftNeighbour = cranes.get(index-1);
 
-        //check other cranes when movement will occur
-        for (Crane othercrane : cranes){
-            if (crane == othercrane)
-                continue;
+            // wacht tot einde beweging om te checken of er interference is
+            if (crane.getCraneRoute().getTime() < leftNeighbour.getCraneRoute().getTime())
+                crane.wait(leftNeighbour.getCraneRoute().getTime());
+            if (crane.getCraneRoute().getTime() > leftNeighbour.getCraneRoute().getTime())
+                leftNeighbour.wait(crane.getCraneRoute().getTime());
 
-            int a = crane.getCraneZoneMax(currentTime);
-            int b = othercrane.getCraneZoneMin(currentTime);
+            int currentTime = crane.getCraneRoute().getTime();
 
-            int c = newLocation;
+            int a = newLocation;
+            int b = leftNeighbour.getCraneZoneMax(currentTime);
+            int c = crane.getCraneZoneMin(currentTime);
 
-            int d = othercrane.getCraneZoneMax(currentTime);
-            int e = crane.getCraneZoneMin(currentTime);
-
-            //(currentCrane < otherCrane < newLocation)
-            if (crane.getCraneZoneMax(currentTime) < othercrane.getCraneZoneMin(currentTime) && othercrane.getCraneZoneMin(currentTime) < newLocation){
-                //move othercrane right
-                int startMovementTime = moveInterferingCrane(othercrane, newLocation + Math.max(crane.getXsafe(), othercrane.getXsafe()));
-                maxStartMovementTime = Math.max(maxStartMovementTime, startMovementTime);
+            //(newLocation < leftNeighbour < currentCrane)
+            if (newLocation <= leftNeighbour.getCraneZoneMax(currentTime) && leftNeighbour.getCraneLocation(currentTime) <= crane.getCraneLocation(currentTime)){
+                //move othercrane left, returns when othercrane starts movement
+                moveInterferingCrane(leftNeighbour, newLocation - Math.max(crane.getXsafe(), leftNeighbour.getXsafe()));
             }
-            //(newLocation < otherCrane < currentCrane)
-            else if (newLocation < othercrane.getCraneZoneMax(currentTime) && othercrane.getCraneZoneMax(currentTime) < crane.getCraneZoneMin(currentTime)){
-                //move othercrane left
-                int startMovementTime = moveInterferingCrane(othercrane, newLocation - Math.max(crane.getXsafe(), othercrane.getXsafe()));
-                maxStartMovementTime = Math.max(maxStartMovementTime, startMovementTime);
+
+
+        }
+
+        //if there is a rightneighbour and crane has to move right
+        if(index < cranes.size()-1 && crane.getX() < newLocation){
+            Crane rightNeighbour = cranes.get(index+1);
+
+            // wacht tot einde beweging om te checken of er interference is
+            if (crane.getCraneRoute().getTime() < rightNeighbour.getCraneRoute().getTime())
+                crane.wait(rightNeighbour.getCraneRoute().getTime());
+            if (crane.getCraneRoute().getTime() > rightNeighbour.getCraneRoute().getTime())
+                rightNeighbour.wait(crane.getCraneRoute().getTime());
+
+            int currentTime = crane.getCraneRoute().getTime();
+
+            //(currentCrane < rightNeighbour < newLocation)
+            if (crane.getCraneLocation(currentTime) < rightNeighbour.getCraneLocation(currentTime) && rightNeighbour.getCraneZoneMin(currentTime) <= newLocation){
+                //move othercrane right, returns when othercrane starts movement
+                moveInterferingCrane(rightNeighbour, newLocation + Math.max(crane.getXsafe(), rightNeighbour.getXsafe()));
             }
         }
 
-        return maxStartMovementTime;
     }
 
     //move a crane to a new x value
-    public int moveInterferingCrane(Crane crane, int newLocation){
+    public void moveInterferingCrane(Crane crane, int newLocation){
 
+        // kraan moet minstens tot huidige tijd wachten om zelf te kunnen bewegen
         int craneTime = crane.getCraneRoute().getTime();
-        int otherCraneTime = checkCraneInterference(crane, newLocation);
 
-        //movement starts when all cranes are synced
-        int startMovementTime = Math.max(craneTime, otherCraneTime);
-
-        //crane waits until last crane starts moving
-        crane.wait(startMovementTime);
+        checkCraneInterference(crane, newLocation);
 
         //move crane out of the way
         crane.move(newLocation, crane.getY());
 
-        return startMovementTime;
+    }
+
+    private void checkMovementSequence(Crane crane, Container container){
+        int lastChange = 0;
+        for(Slot slot : container.getSlots())
+            lastChange = Math.max(lastChange, slot.getLastChange());
+
+        // wait until change to slot happens
+        if (lastChange > crane.getCraneRoute().getTime()){
+            crane.wait(lastChange);
+        }
     }
 
     private Crane findCrane (Container container, Slot newSlot, List<Crane> possibleCranes){

@@ -66,7 +66,7 @@ public class Crane implements Comparable<Crane>{
     }
 
     //determine the current location of a crane during a movement
-    private int getCraneLocation(int time) {
+    public int getCraneLocation(int time) {
 
         CraneMovement currentCM = null;
         for (int i = 0; i < craneRoute.getMovements().size(); i++) {
