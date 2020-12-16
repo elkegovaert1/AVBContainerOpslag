@@ -1,12 +1,19 @@
-import java.util.List;
-
-public class Crane {
+public class Crane implements Comparable<Crane>{
 
     private int id;
     private int x;
     private int y;
-    private int xsafe;
+
+    //stores the movements of the crane + the time of finishing the last assigned movement
     private CraneRoute craneRoute;
+
+    //safety distance to other cranes, no other cranes can enter zone
+    private int xsafe;
+
+    //effective borders for a crane in the yard
+    //(when all other cranes to the left or right are the minimal distance from each other)
+    private int maxLeft;
+    private int maxRight;
 
     public Crane(String id, String x, String y, String z) {
         this.id = Integer.parseInt(id);
@@ -16,7 +23,16 @@ public class Crane {
         this.craneRoute = new CraneRoute(this.id, this.x, this.y);
     }
 
-    //gebruikt bij verplaatsing zonder opnemen of neerplaatsen container (vb. eindpositie of bij labo 1)
+    //------------------------------------------------ CRANE MOVEMENT ----------------------------------------------
+
+    //crane waits in current position until given time
+    public void wait(int time){
+        //save movement
+        craneRoute.setTime(time);
+        craneRoute.move(id, x, y, x, y);
+    }
+
+    //move the crane to a new location
     public void move(int nextX, int nextY){
         //verplaatsing opslaan
         craneRoute.move(id, x, y, nextX, nextY);
@@ -26,7 +42,7 @@ public class Crane {
         setY(nextY);
     }
 
-    //gebruikt bij verplaatsing naar container (+ opnemen of neerplaatsen)
+    //move the crane to a new location and pickup or drop a container
     public void moveContainer(int nextX, int nextY, Container container){
         //verplaatsing opslaan
         craneRoute.moveContainer(id, x, y, nextX, nextY, container);
@@ -36,8 +52,21 @@ public class Crane {
         setY(nextY);
     }
 
-    // -1 als nog niet zo ver
-    private int getZoneOnCertainTime(int time) {
+
+
+
+    //----------------------------------------------- CRANE LOCATION -----------------------------------------------
+
+    public int getCraneZoneMin(int time) {
+        return getCraneLocation(time)-xsafe;
+    }
+
+    public int getCraneZoneMax(int time) {
+        return getCraneLocation(time)+xsafe;
+    }
+
+    //determine the current location of a crane during a movement
+    private int getCraneLocation(int time) {
 
         int currentX = this.getX();
         int currentY = this.getY();
@@ -88,6 +117,10 @@ public class Crane {
         }
     }
 
+
+
+    //--------------------------------------------- GETTERS AND SETTERS --------------------------------------------
+
     public int getId() {
         return id;
     }
@@ -128,11 +161,24 @@ public class Crane {
         this.xsafe = xsafe;
     }
 
-    public int getXmin(int time) {
-        return getZoneOnCertainTime(time)-xsafe;
+    public int getMaxLeft() {
+        return maxLeft;
     }
 
-    public int getXmax(int time) {
-        return getZoneOnCertainTime(time)+xsafe;
+    public void setMaxLeft(int maxLeft) {
+        this.maxLeft = maxLeft;
+    }
+
+    public int getMaxRight() {
+        return maxRight;
+    }
+
+    public void setMaxRight(int maxRight) {
+        this.maxRight = maxRight;
+    }
+
+    @Override
+    public int compareTo(Crane crane) {
+        return Integer.compare(this.x, crane.x);
     }
 }

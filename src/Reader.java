@@ -89,6 +89,8 @@ public class Reader {
             }
             yard.setSlots(slots);
 
+            //--------------------------------------------- LAB 3 ---------------------------------------------
+
             /*
             if(yard.getCranes().size() == 2){
                 yard.setZoneMax(yard.getCranes().get(0).getXmax());
