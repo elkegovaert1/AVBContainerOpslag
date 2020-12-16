@@ -172,6 +172,7 @@ public class Yard {
     //--------------------------------------------- METHODS FOR ANCHORING CONTAINERS -----------------------------
     // PROVIDES FOLLOWING SAFETY RESTRICTIONS:
     // - THE WEIGHT OF THE TOP CONTAINERS MUST BE LARGER THAN 1
+    // - CONTAINERS ARE CHOSEN SO OTHER SAFETY RESTRICTIONS WILL STAY RESPECTED
     // PHYSICAL RESTRICTIONS ARE ALWAYS RESPECTED
 
     private void anchorContainers(){
@@ -407,32 +408,44 @@ public class Yard {
     //move a container to a given location (pass only first slot, other slots follow logically)
     public void moveContainer(Container container, Slot newSlot){
 
-        int newLocation = newSlot.getX() + container.getLc()/2;
+        int pickupLocation = container.bepaalX();
+        int dropLocation = newSlot.getX() + container.getLc()/2;
 
-        //find the best crane to perform the movement
-        Crane crane = findCrane(container, newSlot);
+        //check which cranes can move from start to finish in 1 movement (no temporary slots required)
+        List<Crane> possibleCranes = new ArrayList<>();
+        for (Crane crane: cranes)
+            if (pickupLocation > crane.getMaxLeft() && pickupLocation < crane.getMaxRight() && dropLocation > crane.getMaxLeft() && dropLocation < crane.getMaxRight())
+                possibleCranes.add(crane);
 
-        //check if the crane movement will interfere with other cranes, move these cranes if necessary
-        //wait in same location until other crane starts moving to keep safe distance
-        int startMovementTime  = checkMovementTiming(crane, newLocation);
+        //if not possible for any crane to go from pickup to dropoff => find temporary slot (only used )
+        if (possibleCranes.isEmpty())
+            moveContainerWithIntermediateStep(container, newSlot);
+        else{
+            //indien 1 kraan wel van container naar bestemming kan => find the best crane to perform the movement
+            Crane crane = findCrane(container, newSlot, possibleCranes);
 
-        //check last change of a slot to keep correct sequence of containermovements for that slot
-        int lastChange = 0;
-        for(Slot slot : container.getSlots())
-            lastChange = Math.max(lastChange, slot.getLastChange());
+            //check if the crane movement will interfere with other cranes, move these cranes if necessary
+            //wait in same location until other crane starts moving to keep safe distance
+            int startMovementTime  = checkCraneInterference(crane, dropLocation);
 
-        // wait until change to slot happens
-        if (lastChange > crane.getCraneRoute().getTime()){
-            //waitCrane(crane, lastChange);
+            //check last change of a slot to keep correct sequence of containermovements for that slot
+            int lastChange = 0;
+            for(Slot slot : container.getSlots())
+                lastChange = Math.max(lastChange, slot.getLastChange());
+
+            // wait until change to slot happens
+            if (lastChange > crane.getCraneRoute().getTime()){
+                crane.wait(lastChange);
+            }
+
+            //perform actual container movement
+            pickUpContainer(crane, container);
+            dropContainer(crane, container, newSlot);
         }
-
-        //perform actual container movement
-        pickUpContainer(crane, container);
-        dropContainer(crane, container, newSlot);
 
     }
 
-    private int checkMovementTiming(Crane crane, int newLocation){
+    private int checkCraneInterference(Crane crane, int newLocation){
 
         int currentTime = crane.getCraneRoute().getTime();
 
@@ -443,16 +456,24 @@ public class Yard {
             if (crane == othercrane)
                 continue;
 
+            int a = crane.getCraneZoneMax(currentTime);
+            int b = othercrane.getCraneZoneMin(currentTime);
+
+            int c = newLocation;
+
+            int d = othercrane.getCraneZoneMax(currentTime);
+            int e = crane.getCraneZoneMin(currentTime);
+
             //(currentCrane < otherCrane < newLocation)
             if (crane.getCraneZoneMax(currentTime) < othercrane.getCraneZoneMin(currentTime) && othercrane.getCraneZoneMin(currentTime) < newLocation){
                 //move othercrane right
-                int startMovementTime = moveCrane(othercrane, newLocation + Math.max(crane.getXsafe(), othercrane.getXsafe()));
+                int startMovementTime = moveInterferingCrane(othercrane, newLocation + Math.max(crane.getXsafe(), othercrane.getXsafe()));
                 maxStartMovementTime = Math.max(maxStartMovementTime, startMovementTime);
             }
             //(newLocation < otherCrane < currentCrane)
-            else if (newLocation < othercrane.getCraneZoneMin(currentTime) && othercrane.getCraneZoneMin(currentTime) < crane.getCraneZoneMin(currentTime)){
+            else if (newLocation < othercrane.getCraneZoneMax(currentTime) && othercrane.getCraneZoneMax(currentTime) < crane.getCraneZoneMin(currentTime)){
                 //move othercrane left
-                int startMovementTime = moveCrane(othercrane, newLocation - Math.max(crane.getXsafe(), othercrane.getXsafe()));
+                int startMovementTime = moveInterferingCrane(othercrane, newLocation - Math.max(crane.getXsafe(), othercrane.getXsafe()));
                 maxStartMovementTime = Math.max(maxStartMovementTime, startMovementTime);
             }
         }
@@ -460,11 +481,11 @@ public class Yard {
         return maxStartMovementTime;
     }
 
-    //move a crane to a new x value (used for moving cranes out of the way of other cranes)
-    public int moveCrane(Crane crane, int newLocation){
+    //move a crane to a new x value
+    public int moveInterferingCrane(Crane crane, int newLocation){
 
         int craneTime = crane.getCraneRoute().getTime();
-        int otherCraneTime = checkMovementTiming(crane, newLocation);
+        int otherCraneTime = checkCraneInterference(crane, newLocation);
 
         //movement starts when all cranes are synced
         int startMovementTime = Math.max(craneTime, otherCraneTime);
@@ -478,37 +499,109 @@ public class Yard {
         return startMovementTime;
     }
 
-    /*
-    public int waitCrane(Crane crane, int time){
+    private Crane findCrane (Container container, Slot newSlot, List<Crane> possibleCranes){
 
-        //crane might have to move away to avoid a crash if a crane on a future timeline is already on this location
-
-        return startMovementTime;
-    }
-     */
-
-
-    private Crane findCrane (Container container, Slot newSlot){
-
-        int newLocation = newSlot.getX() + container.getLc()/2;
-
-        //if only one crane can reach the spot, choose that crane
-        if (newLocation < cranes.get(1).getMaxLeft())
+        //if only one crane, choose that crane
+        if (cranes.size() == 1)
             return cranes.get(0);
-        if (newLocation > cranes.get(cranes.size()-2).getMaxRight())
-            return cranes.get(cranes.size()-1);
 
-        //TODO: determine amount of cranes between start and end location => which moment
+        int pickupLocation = container.bepaalX();
+        int dropLocation = newSlot.getX() + container.getLc()/2;
 
-        //TODO: work on best crane later, solve conflicts first?
+        //if exactly one crane can do entire movement, choose that crane
+        if (possibleCranes.size() == 1)
+            return possibleCranes.get(0);
 
-        //TODO: placeholder
-        if(new Random().nextBoolean())
-            return cranes.get(0);
+        //TODO: replace random crane with better choice
+        Crane crane = possibleCranes.get(new Random().nextInt(possibleCranes.size()));
+
+        //check that the chosen crane will not cross the last known location of neighbouring cranes
+        //determine place of crane in cranes
+        int i=0;
+        while (crane != cranes.get(i))
+            i++;
+
+        Crane leftNeighbourCrane = null;
+        Crane rightNeighbourCrane = null;
+
+        //cranes on left side of yard have no left neighbour
+        if (i == 0)
+            rightNeighbourCrane = cranes.get(i+1);
+
+        else if (i == cranes.size()-1)
+            leftNeighbourCrane = cranes.get(i-1);
+
+        // left and right neighbour
+        else {
+            rightNeighbourCrane = cranes.get(i+1);
+            leftNeighbourCrane = cranes.get(i-1);
+        }
+
+        //check conflicts
+        boolean conflictingLeftNeighbour;
+        if (leftNeighbourCrane == null)
+            conflictingLeftNeighbour = false;
         else
-            return cranes.get(1);
+            conflictingLeftNeighbour = conflictingLeftNeighbour(leftNeighbourCrane, crane, pickupLocation, dropLocation);
 
-        //return null;
+        boolean conflictingRightNeighbour;
+        //if no right neighbour => no conflict
+        if (rightNeighbourCrane == null)
+            conflictingRightNeighbour = false;
+        else
+            conflictingRightNeighbour = conflictingRightNeighbour(rightNeighbourCrane, crane, pickupLocation, dropLocation);
+
+        //both not left conflicting
+        if (!conflictingLeftNeighbour && !conflictingRightNeighbour)
+            return crane;
+        //only left conflicting
+        else if (conflictingLeftNeighbour && !conflictingRightNeighbour)
+            return leftNeighbourCrane;
+        //only right conflicting
+        else if (!conflictingLeftNeighbour)
+            return rightNeighbourCrane;
+        //both conflicting
+        else{
+            //TODO: replace random crane with better choice
+            if (new Random().nextBoolean())
+                return leftNeighbourCrane;
+            else
+                return rightNeighbourCrane;
+        }
+    }
+
+    private boolean conflictingLeftNeighbour(Crane leftNeighbourCrane, Crane crane, int pickupLocation, int dropLocation){
+
+        int closestPossibleLocationToLeftNeighbour = leftNeighbourCrane.getX()+Math.max(leftNeighbourCrane.getXsafe(), crane.getXsafe());
+
+        //if neighbour is ahead in timeline => no problem to compute locations
+        if (leftNeighbourCrane.getCraneRoute().getTime() >= crane.getCraneRoute().getTime())
+            return false;
+        //if pickup and drop locations do not cross last known location zone => no problem
+        else if (pickupLocation > closestPossibleLocationToLeftNeighbour && dropLocation > closestPossibleLocationToLeftNeighbour)
+            return false;
+        //don't cross last location of other cranes that are behind in timeline => pick other crane (rightneighbour)
+        else{
+            //TODO: possible loop with switching cranes?
+            return true;
+        }
+    }
+
+    private boolean conflictingRightNeighbour(Crane rightNeighbourCrane, Crane crane, int pickupLocation, int dropLocation){
+
+        int closestPossibleLocationToRightNeighbour = rightNeighbourCrane.getX()-Math.max(rightNeighbourCrane.getXsafe(), crane.getXsafe());
+
+        //if neighbour is ahead in timeline => no problem to compute locations
+        if (rightNeighbourCrane.getCraneRoute().getTime() >= crane.getCraneRoute().getTime())
+            return false;
+        //if pickup and drop locations do not cross last known location zone => no problem
+        else if (pickupLocation < closestPossibleLocationToRightNeighbour && dropLocation < closestPossibleLocationToRightNeighbour)
+            return false;
+        //don't cross last location of other cranes that are behind in timeline => pick other crane (rightneighbour)
+        else{
+            //TODO: possible loop with switching cranes?
+            return true;
+        }
     }
 
     //move crane to new location + pick up container
@@ -547,6 +640,62 @@ public class Yard {
             //add slot to container
             container.getSlots().add(slotlist.get(index+i));
         }
+    }
+
+    //zoek plaats in restrictiezone voor doorgeven container
+    private Slot findTemporarySlot(Container container, Slot newSlot){
+
+        //determine lowest maxRight(when mov) or highest maxLeft as bounds for searching
+        int lowestMaxRight = L;
+        int highestMaxLeft = 0;
+        for (Crane crane : cranes){
+            lowestMaxRight = Math.min(lowestMaxRight, crane.getMaxRight());
+            highestMaxLeft = Math.max(highestMaxLeft, crane.getMaxLeft());
+        }
+
+        //halve container mag buiten zone, enkel middelpunt moet in zone
+        int halfContainerSize = container.getSlots().size()/2;
+
+        for (int width = 0; width < slots[0].length; width++) {
+            for (int length = highestMaxLeft/Ls-halfContainerSize; length <= lowestMaxRight/Ls-halfContainerSize; length++) {
+
+                //check max hoogte (temporary: Hmax ipv Hsafe)
+                if(slots[length][width].getContainers().size() + 1 > Hmax)
+                    continue;
+
+                //check zelfde hoogte
+                if(!checkSameHeight(length, width, container))
+                    continue;
+
+                if (!checkSameLength(length, width, container))
+                    continue;
+
+                //check if container can be moved in to destination in 1 step if this slot is used as intermediate
+                int pickupLocation = slots[length][width].getX() + container.getLc()/2;
+                int dropLocation = newSlot.getX() + container.getLc()/2;
+
+                //check which cranes can move from start to finish in 1 movement (no temporary slots required)
+                List<Crane> possibleCranes = new ArrayList<>();
+                for (Crane crane: cranes)
+                    if (pickupLocation > crane.getMaxLeft() && pickupLocation < crane.getMaxRight() && dropLocation > crane.getMaxLeft() && dropLocation < crane.getMaxRight())
+                        possibleCranes.add(crane);
+
+                //if not possible for any crane to go from pickup to dropoff => keep searching
+                if (!possibleCranes.isEmpty())
+                    return slots[length][width];
+
+
+            }
+        }
+
+        return null;
+    }
+
+    private void moveContainerWithIntermediateStep(Container container, Slot newSlot){
+
+        moveContainer(container, findTemporarySlot(container, newSlot));
+        moveContainer(container, newSlot);
+
     }
 
     //calculate effective borders for every crane in the yard (maxLeft and maxRight)
