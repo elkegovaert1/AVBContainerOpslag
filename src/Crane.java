@@ -68,11 +68,6 @@ public class Crane implements Comparable<Crane>{
     //determine the current location of a crane during a movement
     private int getCraneLocation(int time) {
 
-        int currentX = this.getX();
-        int currentY = this.getY();
-        int endX = this.getX();
-        int endY = this.getY();
-
         CraneMovement currentCM = null;
         for (CraneMovement cm: craneRoute.getMovements()) {
             if (cm.getTime() > time) {
@@ -84,6 +79,11 @@ public class Crane implements Comparable<Crane>{
         if (currentCM == null) {
             return -1;
         }
+
+        int currentX = currentCM.getX();
+        int currentY = currentCM.getY();
+        int endX = currentCM.getNextX();
+        int endY = currentCM.getNextY();
 
         // als X langere weg dan Y => true
         boolean lengthOrWidth = Math.abs(currentCM.getX() - currentCM.getNextX()) >= Math.abs(currentCM.getY() - currentCM.getNextY());
